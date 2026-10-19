@@ -1,8 +1,7 @@
-// ---------- constantes ----------
-const C = 250;            // velocidad del sonido en el gas de la nebulosa (px/s)
+// constantes
+const C = 250;
 const W = 900, H = 600;
-let TOP = 104; const BOT = H - 72; // zona de juego entre la nota de arriba y la de abajo (en celular la nota de arriba es más alta)
-// FS: tamaño de letra del canvas. En celular el juego se ve más chico, así que la letra crece un 25 %
+let TOP = 104; const BOT = H - 72;
 let FS = 1;
 const fz = n => (n * FS).toFixed(1) + 'px ';
 const sf = font => FS === 1 ? font : font.replace(/([\d.]+)px/, (_, n) => (n * FS).toFixed(1) + 'px');
@@ -15,30 +14,24 @@ const BODY = 'Candara, "Segoe UI", "Trebuchet MS", "Gill Sans", sans-serif';
 const COL = {
   night: '#141a35', plum: '#4a3a63', paper: '#efe3c8', paper2: '#e2d0a8', ink: '#2e2433', ink2: '#6a5a63',
   gold: '#e6b85c', amber: '#e9964a', rust: '#c4603f', sky: '#7aaed0', sage: '#8fb57a', lilac: '#b49ad1', cream: '#f7eedb',
-  // versiones oscuras para escribir sobre papel
   rustD: '#a3432a', skyD: '#2f6d96', sageD: '#4e7d3d', amberD: '#a8571c', lilacD: '#6c4f99',
 };
 const rnd = (a, b) => a + Math.random() * (b - a);
 const fmt = f => isFinite(f) ? f.toFixed(0) : '—';
-// color del tono: claro sobre el cielo, tinta sobre papel (azul = agudo, rojizo = grave)
 const toneSky = (f, base) => f > base * 1.02 ? COL.sky : f < base * .98 ? COL.rust : COL.cream;
 const toneInk = (f, base) => f > base * 1.02 ? COL.skyD : f < base * .98 ? COL.rustD : COL.ink;
-// azar con semilla: cada cosa "imperfecta" se ve igual en cada frame
 const hash = n => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 const hstr = s => { let h = 7; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) % 100003; return h; };
 function seeded(seed) {
   return () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 }
-let boil = 0; // cambia 8 veces por segundo: las líneas tiemblan un poco, como animación hecha a mano
+let boil = 0;
 
-// Cada anillo dibujado representa 40 oscilaciones reales: 400 Hz = 10 anillos por segundo.
-// Así la cantidad de anillos siempre corresponde a la frecuencia (y es igual en todos los niveles).
 const ONDAS_POR_ANILLO = 40;
 const ringEveryFor = f => ONDAS_POR_ANILLO / f;
 
-// ---------- efecto Doppler general ----------
+// efecto doppler general
 // f' = f · (c + v_obs) / (c − v_src)
-// v_obs: velocidad del observador HACIA la fuente, v_src: velocidad de la fuente HACIA el observador
 function radial(src, obs) {
   const dx = obs.x - src.x, dy = obs.y - src.y, d = Math.hypot(dx, dy) || 1;
   const ux = dx / d, uy = dy / d;
@@ -50,10 +43,10 @@ function doppler(f, src, obs) {
   return Math.max(0, f * (C + vo) / (C - vs));
 }
 
-// ---------- audio ----------
+// audio
 let audio = null, refOn = true;
 function initAudio() {
-  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {} // iPhone: suena aunque esté en silencio
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
   const ac = new (window.AudioContext || window.webkitAudioContext)();
   const master = ac.createGain(); master.gain.value = 0.3; master.connect(ac.destination);
   const voice = type => {
@@ -102,10 +95,10 @@ function chime() {
   });
 }
 
-// ---------- input ----------
+// input
 const keys = {};
 addEventListener('keydown', e => {
-  if (e.target.closest && e.target.closest('input, textarea')) return; // escribiendo en el registro
+  if (e.target.closest && e.target.closest('input, textarea')) return;
   keys[e.code] = true;
   if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
   if (!e.repeat && (e.code === 'KeyP' || (e.code === 'Escape' && state === 'pause'))) { state === 'pause' ? resumeGame() : pauseGame(); return; }
@@ -122,17 +115,14 @@ addEventListener('keydown', e => {
   command(e.code);
 });
 addEventListener('keyup', e => keys[e.code] = false);
-// atajos del juego (también los usan los botones táctiles)
 function command(code) {
   if (state !== 'play') return;
   if (code === 'KeyR') { loadLevel(cur); say('Nivel reiniciado', 1.4); }
   if (code === 'KeyH') startTut(cur);
   const n = ['Digit1', 'Digit2', 'Digit3'].indexOf(code);
-  if (n >= 0) { if (run) run.ranked = false; startTut(n); } // saltar niveles: ese intento ya no cuenta para la tabla
+  if (n >= 0) { if (run) run.ranked = false; startTut(n); }
 }
 
-// joystick táctil: donde pones el dedo (lado izquierdo) aparece la base; arrastra para empujar.
-// En el lado derecho, mantener el dedo frena.
 const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0, ax: 0, ay: 0 }, JOY_R = 56;
 let brakeId = null, touchMode = false;
 function setTouch(on) { touchMode = on; FS = on ? 1.25 : 1; TOP = on ? 122 : 104; document.body.classList.toggle('touch', on); }
@@ -142,7 +132,7 @@ cv.addEventListener('pointerdown', e => {
   if (e.pointerType === 'touch') setTouch(true);
   if (state !== 'play') return;
   const p = toCanvas(e);
-  try { cv.setPointerCapture(e.pointerId); } catch {} // así el dedo se sigue aunque salga del canvas
+  try { cv.setPointerCapture(e.pointerId); } catch {}
   if (p.x > W * .72) { if (brakeId === null) brakeId = e.pointerId; }
   else if (joy.id === null) Object.assign(joy, { id: e.pointerId, ox: p.x, oy: p.y, x: p.x, y: p.y, ax: 0, ay: 0 });
 });
@@ -151,7 +141,6 @@ cv.addEventListener('pointermove', e => {
   const p = toCanvas(e);
   let dx = p.x - joy.ox, dy = p.y - joy.oy;
   const d = Math.hypot(dx, dy);
-  // si arrastras más allá del borde, la base te sigue
   if (d > JOY_R) { dx *= JOY_R / d; dy *= JOY_R / d; joy.ox = p.x - dx; joy.oy = p.y - dy; }
   joy.x = p.x; joy.y = p.y;
   const k = Math.hypot(dx, dy) / JOY_R;
@@ -164,7 +153,7 @@ const release = e => {
 cv.addEventListener('pointerup', release); cv.addEventListener('pointercancel', release);
 const brakeHint = () => touchMode ? 'frena con el lado derecho' : 'Espacio frena';
 
-// ---------- jugador (tu nave) ----------
+// jugador
 const P = { x: 0, y: 0, vx: 0, vy: 0, ang: 0, thr: 0 };
 const speed = () => Math.hypot(P.vx, P.vy);
 let puffs = [], puffT = 0;
@@ -175,24 +164,21 @@ function movePlayer(dt, maxV) {
   if (keys.KeyW || keys.ArrowUp) ay--;
   if (keys.KeyS || keys.ArrowDown) ay++;
   if (ax && ay) { ax *= Math.SQRT1_2; ay *= Math.SQRT1_2; }
-  if (joy.id !== null) { ax = joy.ax; ay = joy.ay; } // joystick: empuja más cuanto más lo inclinas
+  if (joy.id !== null) { ax = joy.ax; ay = joy.ay; }
   const acc = (keys.ShiftLeft || keys.ShiftRight) ? 60 : 260;
   P.vx += ax * acc * dt; P.vy += ay * acc * dt;
   if (keys.Space || brakeId !== null) { const k = Math.exp(-4 * dt); P.vx *= k; P.vy *= k; }
   const sp = speed();
   if (sp > maxV) { P.vx *= maxV / sp; P.vy *= maxV / sp; }
-  // sin fricción: si no tocas nada, tu velocidad se mantiene
   P.x += P.vx * dt; P.y += P.vy * dt;
   const r = 14;
   if (P.x < r) { P.x = r; P.vx = Math.abs(P.vx); }
   if (P.x > W - r) { P.x = W - r; P.vx = -Math.abs(P.vx); }
   if (P.y < TOP + r) { P.y = TOP + r; P.vy = Math.abs(P.vy); }
   if (P.y > BOT - r) { P.y = BOT - r; P.vy = -Math.abs(P.vy); }
-  // la nave mira hacia donde empujas (o hacia donde va)
   const want = (ax || ay) ? Math.atan2(ay, ax) : speed() > 15 ? Math.atan2(P.vy, P.vx) : P.ang;
   P.ang += Math.atan2(Math.sin(want - P.ang), Math.cos(want - P.ang)) * Math.min(1, dt * 10);
   P.thr += (Math.min(1, Math.hypot(ax, ay)) - P.thr) * Math.min(1, dt * 12);
-  // humito detrás de la nave al acelerar
   if (P.thr > .4 && (puffT -= dt) <= 0) {
     puffT = .07;
     const cx = Math.cos(P.ang), sy = Math.sin(P.ang);
@@ -210,7 +196,7 @@ function solid(o, R) {
 }
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
-// ---------- texturas (se generan aquí mismo, sin descargar nada) ----------
+// texturas
 function noiseCanvas(n, paint) {
   const c = document.createElement('canvas'); c.width = c.height = n;
   const g = c.getContext('2d'), img = g.createImageData(n, n), d = img.data;
@@ -218,9 +204,7 @@ function noiseCanvas(n, paint) {
   g.putImageData(img, 0, 0);
   return c;
 }
-// motitas cafés para el papel
 const PAPER_TEX = noiseCanvas(160, (d, i, v) => { d[i] = 96; d[i + 1] = 72; d[i + 2] = 52; d[i + 3] = v < .35 ? v * 95 : 0; });
-// grano de película: puntitos claros y oscuros
 const FILM_TEX = noiseCanvas(220, (d, i, v) => { const l = v > .5; d[i] = d[i + 1] = d[i + 2] = l ? 255 : 0; d[i + 3] = Math.abs(v - .5) * 44; });
 const PAPER_GRAIN = ctx.createPattern(PAPER_TEX, 'repeat'), FILM = ctx.createPattern(FILM_TEX, 'repeat');
 document.documentElement.style.setProperty('--paper-grain', `url(${PAPER_TEX.toDataURL()})`);
@@ -230,8 +214,7 @@ function filmGrain() {
   ctx.save(); ctx.globalAlpha = .5; ctx.translate(-ox, -oy); ctx.fillStyle = FILM; ctx.fillRect(ox, oy, W, H); ctx.restore();
 }
 
-// ---------- trazos a mano ----------
-// círculo de pluma: el radio ondula y el trazo se pasa un poquito del inicio
+// trazos a mano
 function sketchCircle(x, y, r, seed, amp = 1.5) {
   const n = Math.max(20, Math.min(80, r * .45 | 0));
   const p1 = hash(seed) * 6.28, p2 = hash(seed + 1) * 6.28, a0 = hash(seed + 2) * 6.28;
@@ -243,7 +226,6 @@ function sketchCircle(x, y, r, seed, amp = 1.5) {
     i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
   }
 }
-// rectángulo de papel recortado a mano: esquinas movidas, lados con pancita
 function roughRect(x, y, w, h, seed, j = 2) {
   const c = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(([px, py], i) => [px + (hash(seed + i) - .5) * j * 2, py + (hash(seed + i + 9) - .5) * j * 2]);
   ctx.beginPath(); ctx.moveTo(c[0][0], c[0][1]);
@@ -265,7 +247,6 @@ function tape(x, y, ang, w = 48) {
   ctx.strokeStyle = 'rgba(110,90,70,.25)'; ctx.lineWidth = 1; ctx.stroke();
   ctx.restore();
 }
-// nota de papel con sombra dura, motitas y contorno de tinta
 function paper(x, y, w, h, seed, o = {}) {
   const sh = o.sh ?? 4, j = o.j ?? 2;
   roughRect(x + sh, y + sh + 1, w, h, seed, j); ctx.fillStyle = 'rgba(8,6,18,.4)'; ctx.fill();
@@ -275,7 +256,6 @@ function paper(x, y, w, h, seed, o = {}) {
   ctx.strokeStyle = 'rgba(46,36,51,.6)'; ctx.lineWidth = 1.4; ctx.stroke();
   if (o.tape) for (const [tx, ty, ta] of o.tape) tape(tx, ty, ta);
 }
-// chispita de 4 puntas con lados curvos
 function sparkle(g, x, y, s, col, rot = 0) {
   g.save(); g.translate(x, y); g.rotate(rot); g.fillStyle = col;
   g.beginPath(); g.moveTo(0, -s);
@@ -283,7 +263,6 @@ function sparkle(g, x, y, s, col, rot = 0) {
   g.quadraticCurveTo(-s * .14, s * .14, -s, 0); g.quadraticCurveTo(-s * .14, -s * .14, 0, -s);
   g.fill(); g.restore();
 }
-// estrella de un solo trazo, como la dibuja cualquiera en un cuaderno
 function doodleStar(g, x, y, s, R) {
   g.beginPath();
   for (let i = 0; i <= 5; i++) {
@@ -294,7 +273,7 @@ function doodleStar(g, x, y, s, R) {
   g.stroke();
 }
 
-// ---------- cielo pintado (uno por nivel) ----------
+// cielo pintado
 const TONES = [
   { top: '#141a35', bottom: '#2a2146', strokes: ['#4a3a63', '#2c3a66', '#6b4f7a', '#3a2f58', '#7a5a4a'], doodle: 'planet' },
   { top: '#17163a', bottom: '#2e1f47', strokes: ['#5a3f72', '#3b2d5e', '#6e4d80', '#28335f', '#7a4f6a'], doodle: 'moon' },
@@ -306,7 +285,6 @@ function makeSky(seed, tn) {
   const g = c.getContext('2d'); g.scale(DPR, DPR);
   const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, tn.top); bg.addColorStop(1, tn.bottom);
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  // pinceladas de gouache con marcas de cerdas
   for (let i = 0; i < 170; i++) {
     const col = tn.strokes[i % tn.strokes.length], rx = r(40, 170), ry = r(6, 28);
     g.save(); g.translate(r(-50, W + 50), r(-30, H + 30)); g.rotate(r(-.45, .45));
@@ -318,7 +296,6 @@ function makeSky(seed, tn) {
     }
     g.restore();
   }
-  // estrellas: puntitos chuecos, chispitas y alguna estrella de un trazo
   const tints = ['#f7eedb', '#f3d9a4', '#d9e3ef', '#f0c7b0'];
   for (let i = 0; i < 230; i++) {
     g.globalAlpha = r(.2, .85); g.fillStyle = tints[i % 4];
@@ -327,7 +304,6 @@ function makeSky(seed, tn) {
   for (let i = 0; i < 20; i++) { g.globalAlpha = r(.45, .95); sparkle(g, r(0, W), r(0, H), r(2.5, 6.5), tints[i % 2], r(-.3, .3)); }
   g.globalAlpha = .5; g.strokeStyle = '#f3d9a4'; g.lineWidth = 1.1; g.lineJoin = 'round';
   for (let i = 0; i < 6; i++) doodleStar(g, r(20, W - 20), r(120, H - 90), r(5, 9), R);
-  // un garabato distinto en cada cielo
   g.globalAlpha = .42; g.strokeStyle = '#f7eedb'; g.lineWidth = 1.5; g.lineCap = 'round';
   if (tn.doodle === 'planet') {
     g.beginPath(); g.arc(800, 455, 17, 0, 7); g.stroke();
@@ -341,7 +317,6 @@ function makeSky(seed, tn) {
     g.stroke();
   }
   g.globalAlpha = 1;
-  // grano del papel pintado
   const img = g.getImageData(0, 0, c.width, c.height), d = img.data;
   for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - .5) * 16; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
   g.putImageData(img, 0, 0);
@@ -360,7 +335,6 @@ function sky(level, t) {
     ctx.globalAlpha = .35 + .5 * k; sparkle(ctx, s.x, s.y, s.s * (.6 + .5 * k), '#f7eedb', s.p);
   }
   ctx.globalAlpha = 1;
-  // estrella fugaz de vez en cuando: un rayón de gis
   if (!shoot || t < shoot.t0) { if (Math.random() < 0.004) shoot = { t0: t, x: rnd(100, 650), y: rnd(130, 260) }; else return; }
   const k = t - shoot.t0; if (k > 1.1) { shoot = null; return; }
   const hx = shoot.x + k * 420, hy = shoot.y + k * 170, a = Math.min(1, (1.1 - k) * 2);
@@ -369,14 +343,13 @@ function sky(level, t) {
   ctx.globalAlpha = a; sparkle(ctx, hx, hy, 5, '#f7eedb', k * 4); ctx.globalAlpha = 1;
 }
 
-// ---------- personajes y objetos ----------
+// personajes y objetos
 function roundStarPath(x, y, R, r, rot, seed) {
   const pts = [];
   for (let i = 0; i < 10; i++) {
     const a = rot - Math.PI / 2 + i * Math.PI / 5, rr = (i % 2 ? r : R) * (1 + (hash(seed + i) - .5) * .07);
     pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
   }
-  // puntas redondas: cada vértice hace de control entre dos puntos medios
   const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
   ctx.beginPath();
   const m = mid(pts[9], pts[0]); ctx.moveTo(m[0], m[1]);
@@ -388,13 +361,11 @@ function eye(x, y, look, tall, sleepy) {
   ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.4; ctx.stroke();
   ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(x + look.x * 1.7, y + look.y * 2.2, 2.3, 0, 7); ctx.fill();
   ctx.fillStyle = COL.cream; ctx.beginPath(); ctx.arc(x + look.x * 1.7 - .8, y + look.y * 2.2 - .9, .7, 0, 7); ctx.fill();
-  if (sleepy) { // párpado caído: suena grave y le da sueño
+  if (sleepy) {
     ctx.fillStyle = '#e8b04f'; ctx.beginPath(); ctx.ellipse(x, y - 1, 5, 5.6, 0, Math.PI, 0); ctx.fill();
     ctx.strokeStyle = COL.ink; ctx.beginPath(); ctx.moveTo(x - 5, y - 1); ctx.lineTo(x + 5, y - 1); ctx.stroke();
   }
 }
-// la estrella del nivel 1: gordita, con cara; te sigue con la mirada.
-// Su cara no cambia con el tono: ella siempre suena a 400 Hz; lo que cambia es lo que oyes TÚ.
 function drawStarBuddy(x, y, t, look) {
   for (const [r, a] of [[80, .06], [64, .08], [52, .11]]) { sketchCircle(x, y, r, 900 + r + boil % 3, 3); ctx.fillStyle = `rgba(233,150,74,${a})`; ctx.fill(); }
   ctx.strokeStyle = COL.gold; ctx.lineCap = 'round';
@@ -413,7 +384,6 @@ function drawStarBuddy(x, y, t, look) {
   ctx.restore();
   roundStarPath(x, cy, 50, 27, rot, sd);
   ctx.strokeStyle = COL.ink; ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.stroke();
-  // cara
   const blink = (t % 4.3) < .13;
   for (const ex of [-9, 9]) {
     if (blink) { ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + ex - 4, cy - 2); ctx.quadraticCurveTo(x + ex, cy, x + ex + 4, cy - 2); ctx.stroke(); }
@@ -424,9 +394,6 @@ function drawStarBuddy(x, y, t, look) {
   ctx.strokeStyle = COL.ink; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(x, cy + 6, 5.5, .35, Math.PI - .35); ctx.stroke();
 }
-// cristal receptor del nivel 2: funciona como el cristal piezoeléctrico de un micrófono,
-// que convierte la vibración del sonido en una señal y así "mide" la frecuencia que le llega.
-// mode: 'active' = el que escucha ahora · 'next' = los que siguen · 'done' = ya midió su tono
 function drawCrystal(x, y, t, mode, seed = 0) {
   const active = mode === 'active', done = mode === 'done', lit = active || done;
   if (lit) { sketchCircle(x, y - 4, 44, 700 + seed + boil % 3, 2.5); ctx.fillStyle = done ? 'rgba(143,181,122,.2)' : 'rgba(180,154,209,.15)'; ctx.fill(); }
@@ -457,7 +424,6 @@ function rockPath(x, y) {
   }
   ctx.closePath();
 }
-// el cometa del nivel 3: una roca con ojos decididos y cola de pinceladas
 function drawComet(x, y, vx, vy, t, look) {
   const sp = Math.hypot(vx, vy), ux = sp ? vx / sp : 1, uy = sp ? vy / sp : 0, nx = -uy, ny = ux, L = 80 + sp * .55;
   ctx.lineCap = 'round';
@@ -481,7 +447,6 @@ function drawComet(x, y, vx, vy, t, look) {
   ctx.strokeStyle = COL.ink; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(x - 11, y - 9); ctx.lineTo(x - 3, y - 7); ctx.moveTo(x + 11, y - 9); ctx.lineTo(x + 3, y - 7); ctx.stroke();
 }
-// tu nave: una cápsula con ventanilla, aletas y una antena-oreja que escucha
 function drawShip(x, y, ang, thr, blink = 0) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(1.3, 1.3);
   if (thr > .05) {
@@ -494,7 +459,6 @@ function drawShip(x, y, ang, thr, blink = 0) {
   for (const s of [-1, 1]) {
     ctx.beginPath(); ctx.moveTo(-5, 7 * s); ctx.quadraticCurveTo(-12, 15 * s, -16, 14 * s); ctx.quadraticCurveTo(-14, 7 * s, -11, 4 * s); ctx.closePath(); ctx.fill(); ctx.stroke();
   }
-  // antena con platito (es el sensor que oye las ondas); la lucecita parpadea con cada onda
   ctx.beginPath(); ctx.moveTo(-2, -9); ctx.lineTo(-4, -16); ctx.stroke();
   ctx.fillStyle = COL.paper2; ctx.beginPath(); ctx.arc(-4, -18, 4.2, Math.PI * .1, Math.PI * 1.1); ctx.closePath(); ctx.fill(); ctx.stroke();
   ctx.fillStyle = blink > 0 ? `rgba(230,184,92,${.4 + .6 * blink})` : '#8a7a70';
@@ -532,7 +496,6 @@ function drawPortal(p, t) {
   for (let i = 0; i < 3; i++) { const a = t + i * 2.1; sparkle(ctx, p.x + Math.cos(a) * 46, p.y + Math.sin(a) * 46, 3.5, COL.cream, a); }
   labelStack(p, 44, [{ text: 'portal', font: '18px ' + HAND, color: COL.sageD }]);
 }
-// flechita de velocidad, a mano
 function drawArrow(x, y, vx, vy, color, off = 14) {
   const sp = Math.hypot(vx, vy); if (sp < 5) return;
   const ux = vx / sp, uy = vy / sp, len = 20 + sp * 0.2;
@@ -541,7 +504,6 @@ function drawArrow(x, y, vx, vy, color, off = 14) {
   ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo((x0 + x1) / 2 - uy * 2, (y0 + y1) / 2 + ux * 2, x1, y1); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(x1 - ux * 8 - uy * 6, y1 - uy * 8 + ux * 6); ctx.lineTo(x1, y1); ctx.lineTo(x1 - ux * 8 + uy * 6, y1 - uy * 8 - ux * 6); ctx.stroke();
 }
-// flecha guía gordita: hacia el objeto (+1) o alejándose (-1)
 function guideArrow(from, to, dir) {
   if (!dir) return;
   const d = dist(from, to) || 1, ux = (to.x - from.x) / d * dir, uy = (to.y - from.y) / d * dir, nx = -uy, ny = ux;
@@ -551,7 +513,6 @@ function guideArrow(from, to, dir) {
   ctx.beginPath(); poly.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.closePath();
   ctx.fillStyle = COL.amber; ctx.fill(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
 }
-// línea de puntitos entre los dos: azul si se acercan, rojiza si se alejan
 function sightLine(a, b, vr) {
   const d = dist(a, b), off = (time * 30) % 12;
   ctx.fillStyle = vr > 0 ? COL.sky : COL.rust; ctx.globalAlpha = .75;
@@ -561,7 +522,6 @@ function sightLine(a, b, vr) {
   }
   ctx.globalAlpha = 1;
 }
-// anillo que se llena mientras sostienes el tono correcto
 function holdRing(x, y, r, k) {
   ctx.setLineDash([3, 5]); sketchCircle(x, y, r, 444, .8);
   ctx.strokeStyle = 'rgba(247,238,219,.35)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
@@ -582,7 +542,6 @@ function drawLock(x, y, open, fill) {
   roughRect(x - 6.5, y, 13, 10, hstr(x), .8); ctx.fillStyle = fill; ctx.fill(); ctx.stroke();
   ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(x, y + 4.5, 1.3, 0, 7); ctx.fill();
 }
-// ballena (grave) y pajarito (agudo) para la regla
 function whale(x, y) {
   ctx.fillStyle = '#6f8fb0'; ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.6; ctx.lineJoin = 'round';
   ctx.beginPath(); ctx.moveTo(x - 15, y + 2); ctx.quadraticCurveTo(x - 14, y - 9, x + 2, y - 8); ctx.quadraticCurveTo(x + 13, y - 7, x + 14, y + 1);
@@ -597,34 +556,29 @@ function bird(x, y) {
   ctx.fillStyle = COL.gold; ctx.beginPath(); ctx.moveTo(x + 7, y - 2); ctx.lineTo(x + 12, y); ctx.lineTo(x + 7, y + 1.5); ctx.closePath(); ctx.fill(); ctx.stroke();
   ctx.fillStyle = '#5c8fb3'; ctx.beginPath(); ctx.moveTo(x - 4, y); ctx.quadraticCurveTo(x - 1, y - 9, x + 3, y - 2); ctx.closePath(); ctx.fill(); ctx.stroke();
   ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(x + 3.5, y - 2.5, 1.1, 0, 7); ctx.fill();
-  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.2; // notitas musicales
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.2;
   ctx.beginPath(); ctx.moveTo(x + 15, y - 8); ctx.lineTo(x + 15, y - 15); ctx.lineTo(x + 18, y - 14); ctx.stroke();
   ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.ellipse(x + 13.8, y - 8, 1.8, 1.3, -.4, 0, 7); ctx.fill();
 }
 
-// ---------- efectos ----------
+// efectos
 let rings = [], msgs = [], sparks = [], shake = 0, time = 0, hits = [], pulse = 0, ringId = 0;
 function emitRing(o, rgb) { rings.push({ x: o.x, y: o.y, t0: time, rgb }); }
-// suelta anillos a intervalos exactos (no depende de los fps): todos quedan igual de separados.
-// sup = la fuente iba más rápido que el sonido cuando salió este anillo (forma parte del cono)
 function emitEvery(lv, o, rgb, dt, sup = false) {
   lv.ringT -= dt;
   while (lv.ringT <= 0) {
-    const back = -lv.ringT; // hace cuánto debió salir
+    const back = -lv.ringT;
     rings.push({ x: o.x - (o.vx || 0) * back, y: o.y - (o.vy || 0) * back, t0: time - back, rgb, sup });
     lv.ringT += lv.ringEvery;
   }
 }
 function say(text, dur = 2.2, color = COL.ink, big = false) { msgs.push({ text, t: dur, dur, color, big }); }
 function holdStep(ok, h, dt) { return ok ? h + dt : Math.max(0, h - dt * 1.5); }
-// frente de onda: todos iguales (mismo grosor, círculo completo), porque la fuente siempre suena igual.
-// Solo se desvanecen al crecer: la onda se reparte en un círculo más grande y llega más débil.
 function drawRing(x, y, rad, rgb, a) {
   if (rad < 2 || a <= 0) return;
   ctx.strokeStyle = `rgba(${rgb},${a})`; ctx.lineWidth = 1.8;
   ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.stroke();
 }
-// confeti de chispitas al abrir una cerradura
 function burst(x, y) {
   const cols = [COL.gold, COL.amber, COL.lilac, COL.sage, COL.cream];
   for (let i = 0; i < 20; i++) { const a = Math.random() * 6.28, v = rnd(60, 200); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t0: time, color: cols[i % 5], s: rnd(3, 6) }); }
@@ -639,7 +593,7 @@ function drawSparks() {
   ctx.globalAlpha = 1;
 }
 
-// ---------- texto y etiquetas ----------
+// texto y etiquetas
 function fitFont(text, weight, size, min, maxW, fam = BODY) {
   ctx.font = `${weight} ${size}px ${fam}`;
   while (size > min && ctx.measureText(text).width > maxW) ctx.font = `${weight} ${--size}px ${fam}`;
@@ -653,7 +607,6 @@ function wrapLines(text, maxW) {
   if (line) out.push(line);
   return out;
 }
-// texto sobre el cielo: relleno claro con borde de tinta, como calcomanía
 function fitText(text, x, y, font, color) {
   if (!text) return;
   ctx.font = sf(font); ctx.textAlign = 'center';
@@ -661,7 +614,6 @@ function fitText(text, x, y, font, color) {
   ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(20,16,30,.9)'; ctx.strokeText(text, px, py);
   ctx.fillStyle = color; ctx.fillText(text, px, py);
 }
-// etiqueta de papel pegada a un objeto (arriba o abajo según dónde quepa), un poquito chueca
 function labelStack(o, r, items, bottom = BOT - 8, above = false) {
   items = items.filter(it => it.text);
   if (!items.length) return;
@@ -678,7 +630,6 @@ function labelStack(o, r, items, bottom = BOT - 8, above = false) {
   items.forEach((it, i) => { ctx.font = sf(it.font || '14px ' + BODY); ctx.fillStyle = it.color || COL.ink; ctx.fillText(it.text, 0, -h / 2 + 5 + lh * i + lh / 2 + 1); });
   ctx.restore(); ctx.textBaseline = 'alphabetic';
 }
-// qué decirle al jugador según lo que se oye y cómo se mueve (vr > 0 = acercándose)
 function coachFor(heard, lo, hi, vr, base, name) {
   if (!isFinite(heard)) return { ok: false, dir: 0, text: 'más lento: vas más rápido que tus ondas' };
   if (heard >= lo && heard <= hi) return { ok: true, dir: 0, text: '¡así! mantén esa velocidad' };
@@ -688,7 +639,7 @@ function coachFor(heard, lo, hi, vr, base, name) {
 const coachItem = (lv) => ({ text: lv.coach, font: 'bold 15px ' + BODY, color: lv.ok ? COL.sageD : COL.ink });
 const waveItem = (lv) => ({ text: lv.waveText, font: '12.5px ' + BODY, color: COL.ink2 });
 
-// ---------- niveles ----------
+// niveles
 const levels = [
 {
   name: 'Nivel 1 · La Estrella',
@@ -713,7 +664,6 @@ const levels = [
     this.base = 400;
     this.need = 1.0;
     this.src = { x: 450, y: 320, vx: 0, vy: 0 };
-    // lo/hi: rango de frecuencia que abre la cerradura
     this.locks = [
       { lo: 440, hi: Infinity, label: '>440', tip: 'Acércate a la estrella: el tono sube.' },
       { lo: 0, hi: 360, label: '<360', tip: 'Ahora ALÉJATE de la estrella: el tono baja.' },
@@ -784,7 +734,6 @@ const levels = [
     P.x = 450; P.y = 320; P.vx = P.vy = 0; P.ang = 0;
     this.base = 300;
     this.need = 1.0;
-    // en orden: cada uno se activa cuando ÉL oye una frecuencia dentro de [lo, hi]
     this.crystals = [
       { x: 780, y: 320, lo: 360, hi: Infinity, label: '>360', tip: 'Vuela HACIA el cristal que brilla.' },
       { x: 820, y: 470, lo: 0, hi: 250, label: '<250', tip: 'Ahora vuela ALEJÁNDOTE del cristal que brilla.' },
@@ -796,12 +745,9 @@ const levels = [
     movePlayer(dt, 340);
     this.crystals.forEach(c => solid(c, 30));
     const c = this.crystals[this.i];
-    // los anillos que sueltas mientras vas hacia el cristal más rápido que el sonido forman el cono de choque
     emitEvery(this, P, '170,205,225', dt, !!c && radial(P, c).vs >= C);
     this.shockCd = Math.max(0, this.shockCd - dt);
 
-    // más rápido que el sonido: tus ondas se amontonan en un cono. No hay boom aquí:
-    // el boom lo oye el cristal cuando el cono le pasa encima (ver onShock)
     if (speed() > C && !this.supersonic) say('Vas más rápido que el sonido: tus ondas forman un cono', 2.4, COL.rustD);
     this.supersonic = speed() > C;
 
@@ -822,7 +768,6 @@ const levels = [
     } else setAudio(this.base, .3, 0);
     return this.portal && dist(P, this.portal) < 30;
   },
-  // el cono de choque llegó al cristal: oye un boom en vez de tu tono
   onShock() {
     if (this.shockCd > 0) return;
     this.shockCd = 2; boomSound(); shake = 0.5;
@@ -889,7 +834,7 @@ const levels = [
     this.base = 350;
     this.need = 1.0;
     this.src = { x: 200, y: 220, vx: 90, vy: 55 };
-    this.speeds = [90, 100, 110]; // el cometa acelera en cada paso
+    this.speeds = [90, 100, 110];
     this.locks = [
       { lo: 330, hi: 370, minSpeed: 70, mirror: true, label: '330-370', tip: 'Vuela IGUAL que el cometa (copia la flecha naranja).' },
       { lo: 580, hi: 760, label: '580-760', tip: 'Ponte DE FRENTE al cometa cuando venga hacia ti.' },
@@ -899,7 +844,6 @@ const levels = [
   },
   update(dt) {
     movePlayer(dt, 300);
-    // el cometa rebota por la sala a velocidad constante
     const s = this.src;
     const sp = this.speeds[Math.min(this.i, 2)], v = Math.hypot(s.vx, s.vy) || 1;
     s.vx *= sp / v; s.vy *= sp / v;
@@ -908,7 +852,6 @@ const levels = [
     if (s.x > W - 60) { s.x = W - 60; s.vx = -Math.abs(s.vx); }
     if (s.y < 150) { s.y = 150; s.vy = Math.abs(s.vy); }
     if (s.y > 490) { s.y = 490; s.vy = -Math.abs(s.vy); }
-    // chocar con el cometa te hace perder el progreso
     this.hitCd -= dt;
     if (dist(P, s) < 34) {
       solid(s, 34);
@@ -937,11 +880,9 @@ const levels = [
     const s = this.src, r = radial(s, P), lk = this.locks[this.i], d = dist(P, s) || 1;
     sightLine(P, s, this.vr);
     drawComet(s.x, s.y, s.vx, s.vy, time, { x: (P.x - s.x) / d, y: (P.y - s.y) / d });
-    // flecha del cometa: azul si viene hacia ti, rojiza si se va
     const mov = r.vs > 8 ? 'viene' : r.vs < -8 ? 'se va' : 'de lado';
     drawArrow(s.x, s.y, s.vx, s.vy, r.vs > 8 ? COL.sky : r.vs < -8 ? COL.rust : COL.cream, 28);
     labelStack(s, 30, [{ text: 'el cometa · 350 Hz · ' + mov, font: '16px ' + HAND, color: COL.amberD }], BOT - 8, true);
-    // pista del espejo: la velocidad del cometa dibujada sobre ti
     if (lk && lk.mirror) drawArrow(P.x, P.y, s.vx, s.vy, COL.amber, 22);
     if (!this.portal) guideArrow(P, s, this.dir);
     if (lk) labelStack(P, 28, [
@@ -962,11 +903,8 @@ const levels = [
 }
 ];
 
-// ---------- explicación animada ----------
-// Mini simulación: una fuente suelta anillos a intervalos exactos y un oyente los cuenta.
-// El tono que suena sale de medir cada cuánto llegan:
-//   f_oída = f · (intervalo con el que salen) / (intervalo con el que llegan)
-const TAPE_S = 3; // segundos que muestra la cinta
+// explicación animada
+const TAPE_S = 3;
 let sim = null, tut = null;
 
 function simReset(o) {
@@ -977,7 +915,6 @@ function simReset(o) {
     rings: [], emits: [], hits: [], t: 0, nextEmit: 0, epoch: 0,
     last: null, heard: 0, pulse: 0, boomReady: true, flash: 0, boomText: 0,
   };
-  // arrancar con ondas ya en el aire (si no, habría unos segundos de silencio al empezar)
   if (o.warm) {
     const s = sim, v = [s.src.vx, s.src.vy, s.lis.vx, s.lis.vy];
     if (o.warmStill) s.src.vx = s.src.vy = s.lis.vx = s.lis.vy = 0;
@@ -1000,14 +937,12 @@ function simStep(dt, onHit) {
   s.t += dt;
   s.src.x += s.src.vx * dt; s.src.y += s.src.vy * dt;
   s.lis.x += s.lis.vx * dt; s.lis.y += s.lis.vy * dt;
-  // emitir anillos en tiempos exactos (no depende de los fps)
   while (s.nextEmit <= s.t) {
     const back = s.t - s.nextEmit;
     s.rings.push({ x: s.src.x - s.src.vx * back, y: s.src.y - s.src.vy * back, t0: s.nextEmit, epoch: s.epoch, id: ringId++ });
     s.emits.push(s.nextEmit);
     s.nextEmit += s.every;
   }
-  // ¿qué anillos cruzaron al oyente en este frame? (instante exacto por interpolación)
   for (const r of s.rings) {
     const side = (s.t - r.t0) * C - Math.hypot(s.lis.x - r.x, s.lis.y - r.y);
     if (r.prev < 0 && side >= 0) {
@@ -1029,8 +964,6 @@ function simStep(dt, onHit) {
   s.boomText = Math.max(0, s.boomText - dt);
 }
 
-// escenas: A = tú escuchas (nivel 1), B = tú suenas (nivel 2), C = los dos se mueven (nivel 3)
-// los anillos salen con la misma escala que en el juego: 1 anillo = 40 ondas
 const sceneA = (lis, extra) => Object.assign({ mode: 'A', base: 400, every: ringEveryFor(400), rgb: '240,205,140', src: { x: 280, y: 300 }, lis }, extra);
 const sceneB = (src, lis, extra) => Object.assign({ mode: 'B', base: 300, every: ringEveryFor(300), rgb: '170,205,225', src, lis }, extra);
 const sceneC = (src, lis, extra) => Object.assign({ mode: 'C', base: 350, every: ringEveryFor(350), rgb: '235,165,105', src, lis }, extra);
@@ -1074,7 +1007,6 @@ const TUT = [
       setup() { simReset(sceneB({ x: -150, y: 190, vx: 425 }, { x: 450, y: 395 }, { ticks: false })); this.wait = 0; },
       step(dt) { if (sim.src.x > 1050 && (this.wait += dt) > 3) { this.wait = 0; simTeleportSource(-150, 190); } },
       onHit(r) {
-        // en vuelo supersónico lo primero que llega es el cono entero: el boom
         if (sim.boomReady && r.epoch === sim.epoch) { sim.boomReady = false; boomSound(); shake = 0.6; sim.flash = 1; sim.boomText = 1.6; }
       },
     },
@@ -1116,7 +1048,6 @@ function nextTut() {
   if (++tut.i >= tut.scenes.length) return endTut();
   tut.scenes[tut.i].setup();
 }
-// después de la explicación viene la hoja con el objetivo del nivel
 function endTut() { shake = 0; loadLevel(tut.level); state = 'brief'; setAudio(0, 0, 0); }
 function play() { state = 'play'; say(lvl.name, 1.8, COL.ink, true); }
 function tutFrame(dt) {
@@ -1124,7 +1055,6 @@ function tutFrame(dt) {
   shake = Math.max(0, shake - dt);
   simStep(dt, sc.onHit ? r => sc.onHit(r) : null);
   if (sc.step) sc.step(dt);
-  // las naves giran suave hacia donde van
   for (const o of [sim.src, sim.lis]) {
     const want = Math.hypot(o.vx, o.vy) > 5 ? Math.atan2(o.vy, o.vx) : (o.ang ?? Math.PI);
     if (o.ang === undefined) o.ang = want;
@@ -1137,13 +1067,12 @@ function tutFrame(dt) {
 function drawTut() {
   const s = sim, sc = tut.scenes[tut.i], src = s.src, lis = s.lis;
   const heard = sc.mute ? 0 : s.heard;
-  const cx = sc.follow ? (src.x + lis.x) / 2 - W / 2 : 0; // cámara que sigue a los dos
+  const cx = sc.follow ? (src.x + lis.x) / 2 - W / 2 : 0;
   const sx = src.x - cx, lx = lis.x - cx;
   ctx.save();
   if (shake > 0) ctx.translate((Math.random() - .5) * 24 * shake, (Math.random() - .5) * 24 * shake);
   sky(tut.level, s.t);
   if (sc.follow) {
-    // puntitos quietos en el gas: se ve que se mueven aunque la cámara los siga
     ctx.fillStyle = 'rgba(247,238,219,.4)';
     for (let gx = Math.floor(cx / 60) * 60; gx < cx + W + 60; gx += 60)
       for (let gy = 180; gy <= 420; gy += 60) { ctx.beginPath(); ctx.arc(gx - cx + (hash(gx + gy) - .5) * 6, gy + (hash(gx * 2 + gy) - .5) * 6, 1.6, 0, 7); ctx.fill(); }
@@ -1153,7 +1082,6 @@ function drawTut() {
     drawRing(r.x - cx, r.y, rad, s.rgb, Math.max(0, .62 - rad / 1300));
   }
 
-  // fuente y oyente; flechas azules si se acercan, rojizas si se alejan
   const rv = radial(src, lis), d = dist(src, lis) || 1, look = { x: (lis.x - src.x) / d, y: (lis.y - src.y) / d };
   const tag = (t, x, y, color) => fitText(t, x, y, '18px ' + HAND, color);
   if (s.mode === 'A') {
@@ -1176,7 +1104,6 @@ function drawTut() {
     tag('tú', lx, lis.y - 30, COL.cream);
     drawArrow(lx, lis.y, lis.vx, lis.vy, rv.vo > 0 ? COL.sky : COL.rust, 22);
   }
-  // cada vez que le llega una onda
   if (s.pulse > 0) {
     sketchCircle(lx, lis.y, 20 + (1 - s.pulse) * 18, 77, 1.2);
     ctx.strokeStyle = `rgba(230,184,92,${s.pulse})`; ctx.lineWidth = 2.5; ctx.stroke();
@@ -1190,7 +1117,6 @@ function drawTut() {
   }
   ctx.restore();
 
-  // nota de arriba: la explicación
   ctx.textAlign = 'left';
   const capF = touchMode ? 24 : 21, subF = touchMode ? 18 : 15.5, capH = capF + 5, subH = subF + 4.5;
   ctx.font = `bold ${capF}px ` + BODY; const capL = wrapLines(sc.cap, W - 150);
@@ -1199,7 +1125,7 @@ function drawTut() {
   ctx.font = '17px ' + HAND; ctx.fillStyle = COL.rustD;
   ctx.fillText(`explicación · nivel ${tut.level + 1}`, 34, 40);
   tut.scenes.forEach((_, k) => {
-    const dx = W - 104 - (tut.scenes.length - 1 - k) * 18; // a la izquierda del botón de pausa
+    const dx = W - 104 - (tut.scenes.length - 1 - k) * 18;
     sketchCircle(dx, 34, k === tut.i ? 5.5 : 4.5, 60 + k, .5);
     ctx.fillStyle = k <= tut.i ? COL.ink : 'rgba(46,36,51,0)'; ctx.fill();
     ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.stroke();
@@ -1210,7 +1136,6 @@ function drawTut() {
   ctx.font = `${subF}px ` + BODY; ctx.fillStyle = COL.ink2;
   for (const l of subL) { ctx.fillText(l, 34, y); y += subH; }
 
-  // la cinta: cada rayita es una onda; juntas = agudo, separadas = grave
   const top = 446, x0 = 168, x1 = 752;
   const toX = t => x1 - (s.t - t) * (x1 - x0) / TAPE_S;
   paper(16, top, W - 32, H - top - 14, 202);
@@ -1221,7 +1146,6 @@ function drawTut() {
     ctx.textAlign = 'left'; fitFont(label, 'bold', 15 * FS, 11, x0 - 44); ctx.fillStyle = COL.ink; ctx.fillText(label, 34, yy + 5);
     ctx.beginPath(); ctx.rect(x0, yy - 13, x1 - x0, 26); ctx.fillStyle = COL.paper2; ctx.fill();
     ctx.strokeStyle = 'rgba(46,36,51,.45)'; ctx.lineWidth = 1.2; ctx.stroke();
-    // todas las rayitas iguales y rectas: solo su separación dice algo (el tiempo entre una onda y la siguiente)
     ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.lineCap = 'butt';
     for (const t of times) {
       const x = Math.round(toX(t) * DPR) / DPR;
@@ -1237,22 +1161,20 @@ function drawTut() {
   filmGrain();
 }
 
-// ---------- estado del juego ----------
+// estado del juego
 let cur = 0, lvl = levels[0], state = 'menu';
 const knob = { x: null, v: 0 };
 function loadLevel(i) {
   cur = i; lvl = levels[i]; rings = []; msgs = []; hits = []; sparks = []; puffs = []; knob.x = null;
   lvl.init();
-  lvl.update(0); // calcula lo que se oye antes del primer frame
+  lvl.update(0);
 }
 const ov = document.getElementById('ov');
 const $ = id => document.getElementById(id);
 const portraitSmall = matchMedia('(orientation: portrait) and (max-width: 700px)');
 const rotateOv = $('rotateOv'), pauseBtn = $('pauseBtn');
 
-// ---------- registro, avisos y tabla de posiciones ----------
-// Para juntar los datos de todos en una hoja de cálculo de Google, pega aquí la URL del Apps Script
-// (instrucciones en registro-apps-script.gs). Si se queda vacía, todo se guarda solo en este dispositivo.
+// registro, avisos y tabla de posiciones
 const REGISTRO_URL = 'https://script.google.com/macros/s/AKfycbzV6WE7QlKHJJRXFl8W4X7INPeRjZJv_aPBPa2Xw04Z9ZrpavqYgUbFqlHF-f4JvWyv/exec';
 const CORREO_OK = /^[a-z0-9._%+-]+@cbtis224\.edu\.mx$/;
 const store = {
@@ -1260,9 +1182,8 @@ const store = {
   set(k, v) { try { localStorage.setItem('doppler.' + k, JSON.stringify(v)); } catch {} },
 };
 let player = store.get('jugador', null);
-let run = null; // intento actual: segundos jugados en cada nivel (sin contar explicaciones)
+let run = null;
 
-// manda un registro o resultado a la hoja; si no hay internet, queda pendiente para la próxima vez
 function sendRemote(data) {
   if (!REGISTRO_URL) return;
   const queue = store.get('pendientes', []);
@@ -1277,7 +1198,6 @@ async function remoteTop() {
   if (!REGISTRO_URL) return null;
   try { const r = await fetch(REGISTRO_URL + '?accion=tabla'); return await r.json(); } catch { return null; }
 }
-// mejor tiempo de cada persona en este dispositivo
 function localTop() {
   const best = {};
   for (const r of store.get('resultados', [])) if (!best[r.correo] || r.total < best[r.correo].total) best[r.correo] = r;
@@ -1301,7 +1221,6 @@ async function renderBoard(el) {
   el.innerHTML = remote ? boardHTML(remote, 'Tabla del grupo, en línea. ' + rule) : boardHTML(localTop(), 'Sin conexión: se muestran los resultados de este dispositivo. ' + rule);
 }
 
-// pantallas del menú: solo una a la vez a la izquierda; el equipo siempre a la derecha
 const PANELS = ['intro', 'outro', 'reg', 'aviso', 'tabla', 'pausa'];
 let panel = 'intro', avisoBack = 'intro';
 function show(id) {
@@ -1343,7 +1262,6 @@ $('regForm').addEventListener('submit', e => {
   updateWho();
   begin();
 });
-// modo profesor (abrir con #profe al final de la dirección): descargar todo lo guardado en este dispositivo
 if (location.hash === '#profe') $('csvBtn').hidden = false;
 $('csvBtn').onclick = () => {
   const cell = v => { v = String(v ?? ''); if (/^[=+\-@]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
@@ -1379,7 +1297,6 @@ function win() {
   ov.hidden = false;
 }
 
-// botones táctiles y pantalla completa
 document.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => command(b.dataset.cmd));
 function toggleFS() {
   if (document.fullscreenElement) return document.exitFullscreen();
@@ -1390,7 +1307,7 @@ if (document.fullscreenEnabled) {
   $('fsBtn').onclick = toggleFS;
 }
 
-// ---------- pausa: muestra la fórmula con los números de ese momento y las opciones ----------
+// pausa
 let prevState = null;
 function pauseGame() {
   if (state !== 'play' && state !== 'tut') return;
@@ -1417,19 +1334,17 @@ $('pSkip').onclick = () => { resumeGame(); endTut(); };
 $('pFs').onclick = toggleFS;
 $('pQuit').onclick = () => { state = 'menu'; run = null; rings = []; setAudio(0, 0, 0); show('intro'); ov.hidden = false; };
 
-// ---------- dibujo ----------
+// dibujo
 function drawFrame() {
   const h = lvl.hud();
   ctx.save();
   if (shake > 0) ctx.translate((Math.random() - .5) * 24 * shake, (Math.random() - .5) * 24 * shake);
   sky(cur, time);
 
-  // frentes de onda: se emiten desde la posición de la fuente y crecen a velocidad c
   rings = rings.filter(r => (time - r.t0) * C < 1100);
   const L = lvl.listener();
   for (const r of rings) {
     const rad = (time - r.t0) * C;
-    // ¿esta cresta acaba de pasar por el oyente?
     if (L) {
       const side = rad - Math.hypot(L.x - r.x, L.y - r.y);
       if (r.prev < 0 && side >= 0) { pulse = 1; hits.push(time); if (r.sup && lvl.onShock) lvl.onShock(); }
@@ -1439,7 +1354,6 @@ function drawFrame() {
   }
 
   if (lvl.portal) drawPortal(lvl.portal, time);
-  // anillos por segundo que le llegan al oyente: × 40 da la frecuencia que oye (cada nivel lo pinta junto a él)
   hits = hits.filter(t => time - t < 2);
   const perSec = hits.length / 2;
   lvl.waveText = L ? `le llegan ${perSec.toFixed(1)} anillos/s × ${ONDAS_POR_ANILLO} ≈ ${(perSec * ONDAS_POR_ANILLO).toFixed(0)} Hz` : '';
@@ -1448,7 +1362,6 @@ function drawFrame() {
   if (L === P && h.lo !== undefined) holdRing(P.x, P.y, 28, h.hold / h.need);
   drawPuffs();
   drawShip(P.x, P.y, P.ang, P.thr, L === P ? pulse : 0);
-  // destello en el oyente cada vez que le llega una onda
   if (L && pulse > 0) {
     sketchCircle(L.x, L.y, 18 + (1 - pulse) * 16, 78, 1);
     ctx.strokeStyle = `rgba(230,184,92,${pulse})`; ctx.lineWidth = 2.5; ctx.stroke();
@@ -1462,7 +1375,6 @@ function drawFrame() {
   filmGrain();
 }
 
-// controles táctiles dibujados sobre el juego
 function drawTouch() {
   if (!touchMode) return;
   const bx = W - 34, by = BOT - 30, on = brakeId !== null;
@@ -1482,7 +1394,6 @@ function drawTouch() {
 }
 
 function drawHud(h) {
-  // nota de arriba: qué hacer ahora y qué se oye
   const rx = W - 196, hh = touchMode ? 106 : 86;
   paper(16, 10, W - 32, hh, 11, { tape: [[64, 11, -.14], [W - 74, 12, .1]] });
   ctx.textAlign = 'left';
@@ -1490,7 +1401,7 @@ function drawHud(h) {
   const nw = ctx.measureText(lvl.name).width;
   ctx.font = fz(15) + HAND; ctx.fillStyle = COL.ink2; ctx.fillText('— ' + h.step, 34 + nw + 10, 37);
   fitFont(h.tip, 'bold', 20 * FS, 12, rx - 64); ctx.fillStyle = COL.ink; ctx.fillText(h.tip, 34, touchMode ? 65 : 62);
-  if (touchMode) { // en celular el "por qué" va más grande, en hasta dos renglones
+  if (touchMode) {
     ctx.font = 'italic 19px ' + BODY; let lines = wrapLines(h.why, rx - 60);
     if (lines.length > 2) { ctx.font = 'italic 16px ' + BODY; lines = wrapLines(h.why, rx - 60).slice(0, 2); }
     ctx.fillStyle = COL.ink2; lines.forEach((l, i) => ctx.fillText(l, 34, 88 + i * 20));
@@ -1506,7 +1417,6 @@ function drawHud(h) {
   drawMeter(h);
 }
 
-// regla de abajo: ballena = grave, pajarito = agudo; una perilla con resorte marca lo que oyes
 function drawMeter(h) {
   const py = H - 66, mx = 136, mw = 356, my = py + 29;
   paper(16, py, W - 32, 56, 23, { tape: [[36, py + 4, -.6]] });
@@ -1536,7 +1446,6 @@ function drawMeter(h) {
   }
   ctx.restore();
   roughRect(mx - 6, my - 9, mw + 12, 18, 61, 1.2); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.9; ctx.stroke();
-  // rayitas de la regla
   ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
   [.5, .71, 1, 1.41, 2].forEach((m, i) => {
     const x = toX(h.base * m);
@@ -1544,14 +1453,12 @@ function drawMeter(h) {
   });
   ctx.font = fz(11.5) + BODY; ctx.fillStyle = COL.ink2; ctx.textAlign = 'center';
   for (const m of [.5, 1, 2]) ctx.fillText(h.base * m, toX(h.base * m), py + 51);
-  // banderita de la meta
   if (za !== undefined) {
     const fx = Math.min(mx + mw - 26, Math.max(mx + 4, (za + zb) / 2 - 14));
     ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(fx, my - 9); ctx.lineTo(fx, py + 4); ctx.stroke();
     ctx.fillStyle = COL.sage; ctx.beginPath(); ctx.moveTo(fx, py + 4); ctx.lineTo(fx + 9, py + 7); ctx.lineTo(fx, py + 10); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.font = '15px ' + HAND; ctx.fillStyle = COL.sageD; ctx.textAlign = 'left'; ctx.fillText('meta', fx + 12, py + 13);
   }
-  // perilla de latón con resorte: llega con un rebotito
   const tx = Math.min(mx + mw, Math.max(mx, toX(h.heard)));
   if (knob.x === null) knob.x = tx;
   knob.v += (tx - knob.x) * .25; knob.v *= .62; knob.x += knob.v;
@@ -1564,7 +1471,6 @@ function drawMeter(h) {
   ctx.beginPath(); ctx.arc(0, -5, 3, 0, 7); ctx.fill(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.2; ctx.stroke();
   ctx.restore();
 
-  // pasos: etiquetitas con candado (o cristal)
   h.steps.forEach((s, k) => {
     const w = 82, x = 622 + k * 88, y = py + 8;
     ctx.save(); ctx.translate(x + w / 2, y + 20); ctx.rotate((hash(k + 40) - .5) * .09);
@@ -1574,7 +1480,7 @@ function drawMeter(h) {
       ctx.fillStyle = s.done ? COL.sage : s.cur ? COL.lilac : 'rgba(180,154,209,.35)'; ctx.fill(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.6; ctx.stroke();
     } else drawLock(-26, -4, s.done, s.done ? COL.sage : s.cur ? COL.gold : '#b9a98a');
     ctx.textAlign = 'left'; fitFont(s.label, 'bold', 13.5 * FS, 10, 54); ctx.fillStyle = s.cur || s.done ? COL.ink : COL.ink2; ctx.fillText(s.label, -14, 5);
-    if (s.done) { // palomita de plumón
+    if (s.done) {
       ctx.strokeStyle = COL.sageD; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.moveTo(22, -2); ctx.lineTo(27, 5); ctx.lineTo(36, -10); ctx.stroke();
     }
@@ -1582,7 +1488,6 @@ function drawMeter(h) {
   });
 }
 
-// listones de papel en el centro para los avisos
 function drawMsgs() {
   let y = 178;
   for (const m of msgs) {
@@ -1606,7 +1511,6 @@ function drawMsgs() {
   }
 }
 
-// hoja "antes de empezar": rol, objetivo y reglas del nivel
 function drawBrief() {
   drawFrame();
   const b = lvl.brief, cw = 620, ch = touchMode ? 400 : 348, x = (W - cw) / 2, y = (H - ch) / 2 + 6;
@@ -1617,7 +1521,6 @@ function drawBrief() {
   ctx.font = '18px ' + HAND; ctx.fillStyle = COL.rustD; ctx.fillText('antes de empezar…', x + 36, y + 44);
   ctx.font = 'bold 40px ' + HAND; ctx.fillStyle = COL.ink; ctx.fillText(lvl.name, x + 34, y + 88);
   fitFont(b.role, '', 17 * FS, 12, cw - 72); ctx.fillStyle = COL.ink2; ctx.fillText(b.role, x + 36, y + 120);
-  // el objetivo, subrayado con plumón verde
   fitFont(b.goal, 'bold', 17 * FS, 12, cw - 170); const gw = ctx.measureText(b.goal).width;
   ctx.strokeStyle = 'rgba(143,181,122,.65)'; ctx.lineWidth = 16; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(x + 128, y + 160); ctx.quadraticCurveTo(x + 128 + gw / 2, y + 156 + hash(boil) * 2, x + 140 + gw, y + 159); ctx.stroke();
@@ -1632,7 +1535,6 @@ function drawBrief() {
     const t = 'izquierda: arrastra para moverte · derecha: mantén para frenar · ❚❚ pausa';
     fitFont(t, 'italic', 18, 11, cw - 72); ctx.fillStyle = COL.ink2; ctx.fillText(t, x + 36, y + 324);
   }
-  // botón de papel naranja que se mece
   const bob = Math.sin(performance.now() / 260) * 2, bw = 290, bx = W / 2 - bw / 2, by = y + ch - 58 + bob;
   roughRect(bx + 4, by + 4, bw, 40, 88, 1.6); ctx.fillStyle = COL.ink; ctx.fill();
   roughRect(bx, by, bw, 40, 88, 1.6); ctx.fillStyle = COL.amber; ctx.fill(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 2.2; ctx.stroke();
@@ -1642,7 +1544,6 @@ function drawBrief() {
   filmGrain();
 }
 
-// fondo animado detrás de la pantalla de inicio y la final
 let ambT = 0;
 function drawAmbient(dt) {
   time += dt;
@@ -1654,12 +1555,11 @@ function drawAmbient(dt) {
   filmGrain();
 }
 
-// ---------- loop ----------
+// loop
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   boil = Math.floor(now / 125);
-  // celular en vertical: el juego se detiene y se pide girarlo
   const needRotate = touchMode && portraitSmall.matches && (state === 'play' || state === 'tut' || state === 'brief');
   if (rotateOv.hidden === needRotate) rotateOv.hidden = !needRotate;
   const showPause = state === 'play' || state === 'tut';
@@ -1675,30 +1575,26 @@ function frame(now) {
     if (done) { if (cur + 1 < levels.length) startTut(cur + 1); else win(); }
   } else if (state === 'tut') tutFrame(dt);
   else if (state === 'brief') drawBrief();
-  else if (state !== 'pause') drawAmbient(dt); // en pausa se queda quieto el último cuadro
+  else if (state !== 'pause') drawAmbient(dt);
   updateEq(dt);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
-// la portada se diseñó a 900×600: se escala igual que el canvas para que siempre quepa
 new ResizeObserver(() => ov.style.setProperty('--k', cv.clientWidth / W)).observe(cv);
 
-// ---------- fórmulas en LaTeX (KaTeX, guardado en vendor/ para que funcione sin internet) ----------
+// fórmulas en latex
 const tex = (src, el, block = false) => {
   if (window.katex) katex.render(src, el, { throwOnError: false, displayMode: block });
-  else el.textContent = src; // si no cargó KaTeX, al menos se ve el código
+  else el.textContent = src;
 };
 for (const el of document.querySelectorAll('.tex')) tex(el.textContent, el, el.classList.contains('block'));
 
-// fórmula en vivo debajo del juego: la misma cuenta que hace el juego, con los números de este momento
 const eqBox = document.getElementById('eq'), eqMath = document.getElementById('eqMath'), eqNote = document.getElementById('eqNote');
 let eqT = 0, eqLast = '';
-// c + v  o  c - v, escrito bonito aunque v sea negativa
 const plus = v => v >= 0 ? `+ ${v}` : `- ${-v}`, minus = v => v >= 0 ? `- ${v}` : `+ ${-v}`;
 function eqFor(f, src, lis, who) {
   const r = radial(src, lis), vo = Math.round(r.vo), vf = Math.round(r.vs);
-  // la fuente va hacia el oyente más rápido que el sonido: la fórmula ya no aplica (todavía no le llega nada)
   if (vf >= C) return `v_f = ${vf}\\ \\text{px/s} \\ \\ge\\ c = ${C}\\ \\text{px/s} \\quad\\Rightarrow\\quad \\text{${who} aún no recibe el sonido}`;
   return `f' = f\\,\\dfrac{c + v_o}{c - v_f} = ${f}\\cdot\\dfrac{${C} ${plus(vo)}}{${C} ${minus(vf)}} \\approx ${Math.max(0, f * (C + vo) / (C - vf)).toFixed(0)}\\ \\text{Hz}`;
 }
@@ -1725,7 +1621,6 @@ function updateEq(dt) {
   if (note !== eqNote.dataset.src) { tex(note, eqNote); eqNote.dataset.src = note; }
 }
 
-// el título con cada letra un poquito chueca, como recortada a mano
 for (const el of document.querySelectorAll('[data-split]')) {
   let k = 0;
   const split = node => {
@@ -1745,7 +1640,6 @@ for (const el of document.querySelectorAll('[data-split]')) {
   split(el);
 }
 
-// cielo de la página: puntitos y chispitas que titilan despacio
 (function () {
   const b = document.getElementById('bg'), g = b.getContext('2d'); let a = [];
   function size() {
