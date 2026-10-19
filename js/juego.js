@@ -1242,7 +1242,7 @@ const $ = id => document.getElementById(id);
 // ---------- registro, avisos y tabla de posiciones ----------
 // Para juntar los datos de todos en una hoja de cálculo de Google, pega aquí la URL del Apps Script
 // (instrucciones en registro-apps-script.gs). Si se queda vacía, todo se guarda solo en este dispositivo.
-const REGISTRO_URL = '';
+const REGISTRO_URL = 'https://script.google.com/macros/s/AKfycbzV6WE7QlKHJJRXFl8W4X7INPeRjZJv_aPBPa2Xw04Z9ZrpavqYgUbFqlHF-f4JvWyv/exec';
 const CORREO_OK = /^[a-z0-9._%+-]+@cbtis224\.edu\.mx$/;
 const store = {
   get(k, d) { try { const v = localStorage.getItem('doppler.' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
