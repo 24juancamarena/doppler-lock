@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Doppler Lock</title>
+<link rel="stylesheet" href="vendor/katex/katex.min.css">
 <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
@@ -30,7 +31,7 @@
         <p class="lead">Un juego para <b>escuchar</b> el efecto Doppler: el tono cambia según cómo te mueves.</p>
         <div class="paper tape info">
           <div class="card-h">¿Sonido en el espacio?</div>
-          <p>En el vacío, no: no hay nada que vibre. Tu nave cruza una <b>nebulosa</b>, una nube de gas. Una nebulosa real es tan poco densa que no oirías nada, así que aquí imaginamos un gas más denso por el que el sonido viaja lento (c = 250 px/s). La antena de tu nave lo escucha.</p>
+          <p>En el vacío, no: no hay nada que vibre. Tu nave cruza una <b>nebulosa</b>, una nube de gas. Una nebulosa real es tan poco densa que no oirías nada, así que aquí imaginamos un gas más denso por el que el sonido viaja lento (<span class="tex">c = 250\ \text{px/s}</span>). La antena de tu nave lo escucha.</p>
           <div class="legend"><span><span class="dot b"></span>azul = más agudo</span><span><span class="dot r"></span>rojizo = más grave</span><span>(los colores solo son una guía: el sonido no tiene color)</span></div>
         </div>
         <ol class="levels">
@@ -67,9 +68,9 @@
           <ul><li>Doppler Lock es un proyecto escolar del Equipo Estrellas (CBTis 224) para aprender el efecto Doppler. Es gratuito y no tiene fines comerciales.</li></ul>
           <h3>Lo que simplificamos</h3>
           <ul>
-            <li>En el aire, el sonido viaja a unos 343 m/s. Aquí va a 250 px/s, una escala de pantalla para que puedas ver las ondas.</li>
+            <li>En el aire, el sonido viaja a unos <span class="tex">343\ \text{m/s}</span>. Aquí va a <span class="tex">c = 250\ \text{px/s}</span>, una escala de pantalla para que puedas ver las ondas.</li>
             <li>Una nebulosa real es tan poco densa que no podrías oír un tono así. Aquí imaginamos un gas más denso.</li>
-            <li>Cada anillo dibujado representa 40 ondas: 400 Hz se ven como 10 anillos por segundo. Si dibujáramos todas, no se distinguirían.</li>
+            <li>Cada anillo dibujado representa 40 ondas: <span class="tex">400\ \text{Hz} \div 40 = 10\ \text{anillos/s}</span>. Si dibujáramos todas, no se distinguirían.</li>
             <li>El azul y el rojizo solo marcan agudo y grave. El sonido no tiene color; el corrimiento al azul y al rojo ocurre con la luz.</li>
           </ul>
           <h3>Aviso de privacidad</h3>
@@ -99,9 +100,12 @@
         <div class="paper board" id="boardOutro"></div>
         <div class="paper tape info">
           <div class="card-h">La fórmula que usaste</div>
-          <p class="formula">f′ = f · (c + v<sub>oyente</sub>) / (c − v<sub>fuente</sub>)</p>
+          <p class="formula"><span class="tex block">f' = f\,\dfrac{c + v_o}{c - v_f}</span></p>
+          <p class="vars"><span class="tex">f</span>: frecuencia de la fuente · <span class="tex">f'</span>: la que se oye · <span class="tex">c</span>: velocidad del sonido · <span class="tex">v_o</span>: velocidad del oyente hacia la fuente · <span class="tex">v_f</span>: velocidad de la fuente hacia el oyente (si se alejan, son negativas).</p>
           <div class="card-h">¿Y en el espacio vacío?</div>
-          <p>Ahí no hay sonido, pero la luz también tiene efecto Doppler: una estrella que se acerca se ve más <span class="b">azul</span> y una que se aleja, más <span class="r">roja</span>. Así sabemos que casi todas las galaxias lejanas se alejan de nosotros.</p>
+          <p>Ahí no hay sonido, pero la luz también tiene efecto Doppler: una estrella que se acerca se ve más <span class="b">azul</span> y una que se aleja, más <span class="r">roja</span>. Para velocidades mucho menores que la de la luz:</p>
+          <p class="formula"><span class="tex block">\dfrac{\Delta\lambda}{\lambda} \approx \dfrac{v}{c_{\text{luz}}}</span></p>
+          <p>Así sabemos que casi todas las galaxias lejanas se alejan de nosotros.</p>
         </div>
         <div class="cta"><button id="againBtn">Jugar otra vez</button></div>
       </section>
@@ -131,6 +135,8 @@
   </div>
 </main>
 
+<div class="paper eq" id="eq" hidden><div id="eqMath"></div><p id="eqNote"></p></div>
+
 <footer id="keys">
   <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas: empujar</span>
   <span><kbd>Shift</kbd> empuje fino</span>
@@ -147,6 +153,7 @@
   <button class="ghost small" id="fsBtn" hidden>Pantalla completa</button>
 </footer>
 
+<script src="vendor/katex/katex.min.js"></script>
 <script src="js/juego.js"></script>
 </body>
 </html>

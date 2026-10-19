@@ -66,6 +66,14 @@ body{
 .info{transform:rotate(-.6deg)}
 .formula{font-size:17px;font-weight:700;letter-spacing:.02em;background:rgba(143,181,122,.25);border:1.5px dashed rgba(46,36,51,.45);border-radius:var(--wob2);padding:7px 10px}
 .formula sub{font-size:.7em}
+.formula .katex-display{margin:.2em 0}
+.formula .katex{font-size:1.45em}
+.vars{font-size:13.5px!important;color:var(--ink2)!important;margin-top:6px!important}
+.katex{font-size:1.08em}
+/* fórmula en vivo debajo del juego */
+.eq{width:100%;max-width:900px;text-align:center;transform:rotate(-.3deg);padding:8px 16px 10px}
+.eq .katex{font-size:1.35em}
+.eq p{font-size:13.5px;color:var(--ink2);margin-top:2px}
 .levels{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .levels li{display:flex;flex-direction:column;gap:1px;padding:9px 12px 10px}
 .levels li:nth-child(1){transform:rotate(-1.4deg)} .levels li:nth-child(2){transform:rotate(.9deg)} .levels li:nth-child(3){transform:rotate(-.5deg)}

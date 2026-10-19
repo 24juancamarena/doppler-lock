@@ -1621,9 +1621,47 @@ function frame(now) {
   } else if (state === 'tut') tutFrame(dt);
   else if (state === 'brief') drawBrief();
   else drawAmbient(dt);
+  updateEq(dt);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// ---------- fórmulas en LaTeX (KaTeX, guardado en vendor/ para que funcione sin internet) ----------
+const tex = (src, el, block = false) => {
+  if (window.katex) katex.render(src, el, { throwOnError: false, displayMode: block });
+  else el.textContent = src; // si no cargó KaTeX, al menos se ve el código
+};
+for (const el of document.querySelectorAll('.tex')) tex(el.textContent, el, el.classList.contains('block'));
+
+// fórmula en vivo debajo del juego: la misma cuenta que hace el juego, con los números de este momento
+const eqBox = document.getElementById('eq'), eqMath = document.getElementById('eqMath'), eqNote = document.getElementById('eqNote');
+let eqT = 0, eqLast = '';
+// c + v  o  c - v, escrito bonito aunque v sea negativa
+const plus = v => v >= 0 ? `+ ${v}` : `- ${-v}`, minus = v => v >= 0 ? `- ${v}` : `+ ${-v}`;
+function eqFor(f, src, lis, who) {
+  const r = radial(src, lis), vo = Math.round(r.vo), vf = Math.round(r.vs);
+  // la fuente va hacia el oyente más rápido que el sonido: la fórmula ya no aplica (todavía no le llega nada)
+  if (vf >= C) return `v_f = ${vf}\\ \\text{px/s} \\ \\ge\\ c = ${C}\\ \\text{px/s} \\quad\\Rightarrow\\quad \\text{${who} aún no recibe el sonido}`;
+  return `f' = f\\,\\dfrac{c + v_o}{c - v_f} = ${f}\\cdot\\dfrac{${C} ${plus(vo)}}{${C} ${minus(vf)}} \\approx ${Math.max(0, f * (C + vo) / (C - vf)).toFixed(0)}\\ \\text{Hz}`;
+}
+function updateEq(dt) {
+  let s = '', note = '';
+  if (state === 'play') {
+    if (cur === 0) { s = eqFor(400, lvl.src, P, 'el oyente'); note = '\\text{Tú eres el oyente } (v_o) \\text{ y la estrella está quieta } (v_f = 0)'; }
+    else if (cur === 1) {
+      const c = lvl.crystals[lvl.i];
+      if (c) { s = eqFor(300, P, c, 'el cristal'); note = '\\text{Tú eres la fuente } (v_f) \\text{ y el cristal está quieto } (v_o = 0)'; }
+    } else { s = eqFor(350, lvl.src, P, 'el oyente'); note = '\\text{El cometa es la fuente } (v_f) \\text{ y tú el oyente } (v_o) \\text{: los dos cuentan}'; }
+  } else if (state === 'tut' && sim) {
+    s = eqFor(sim.base, sim.src, sim.lis, sim.mode === 'B' ? 'el cristal' : 'el oyente');
+    note = 'v > 0 \\text{: se acercan} \\qquad v < 0 \\text{: se alejan}';
+  }
+  eqBox.hidden = !s;
+  if (!s || (eqT -= dt) > 0) return;
+  eqT = .15;
+  if (s !== eqLast) { tex(s, eqMath, true); eqLast = s; }
+  if (note !== eqNote.dataset.src) { tex(note, eqNote); eqNote.dataset.src = note; }
+}
 
 // el título con cada letra un poquito chueca, como recortada a mano
 for (const el of document.querySelectorAll('[data-split]')) {
