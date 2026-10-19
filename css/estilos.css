@@ -33,7 +33,7 @@ body{
   background:rgba(232,218,178,.82);clip-path:polygon(3% 0,97% 0,100% 25%,97% 50%,100% 75%,97% 100%,3% 100%,0 75%,3% 50%,0 25%)}
 
 /* encabezado */
-.top{width:100%;max-width:min(900px,calc((100vh - 160px) * 1.5));display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.top{width:100%;max-width:min(900px,calc((100vh - 160px) * 1.5));max-width:min(900px,calc((100dvh - 160px) * 1.5));display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:8px;font-family:var(--hand);font-size:24px;color:var(--cream)}
 .brand svg{width:34px;height:34px;transform:rotate(-8deg)}
 .brand b{color:var(--gold);font-weight:700}
@@ -41,7 +41,7 @@ body{
 
 /* marco del juego: como una ilustración enmarcada */
 /* el juego se achica si la ventana es baja, para que la página quepa completa sin scroll */
-#wrap{position:relative;width:100%;max-width:min(900px,calc((100vh - 160px) * 1.5));border:3px solid var(--ink);border-radius:18px 8px 16px 10px / 10px 16px 8px 18px;
+#wrap{position:relative;width:100%;max-width:min(900px,calc((100vh - 160px) * 1.5));max-width:min(900px,calc((100dvh - 160px) * 1.5));border:3px solid var(--ink);border-radius:18px 8px 16px 10px / 10px 16px 8px 18px;
   overflow:hidden;box-shadow:7px 8px 0 rgba(8,6,18,.55),inset 0 0 0 2px rgba(247,238,219,.08)}
 #c{display:block;width:100%;height:auto;aspect-ratio:3/2;background:#141a35}
 
@@ -149,7 +149,30 @@ button.linkbtn,button.linkbtn:hover,button.linkbtn:active{font:inherit;color:var
 .board .src{margin-top:8px;font-size:12.5px;color:var(--ink2);font-style:italic}
 
 /* controles táctiles */
-#c{touch-action:none}
+#c{touch-action:none;-webkit-touch-callout:none}
+button{touch-action:manipulation}
+body.touch{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+body.touch input{-webkit-user-select:text;user-select:text}
+.touch-only{display:none}
+body.touch .touch-only{display:block}
+/* en celular los menús van a pantalla completa y a tamaño normal (se pueden desplazar si no caben) */
+body.touch #ov{position:fixed;inset:0;width:auto;height:auto;transform:none;z-index:20;padding:20px 18px;background:var(--grain, none),rgba(20,26,53,.96)}
+body.touch .title{font-size:46px}
+body.touch .title.small{font-size:38px}
+body.touch #eq{display:none!important}
+/* botón de pausa dentro del juego */
+.pause-btn{position:absolute;top:2.5%;right:1.2%;width:6.5%;min-width:34px;aspect-ratio:1;padding:0;display:flex;align-items:center;justify-content:center;
+  font:700 clamp(12px,2vw,19px) var(--body);border-radius:50%;transform:none;box-shadow:2px 2px 0 var(--ink);z-index:5}
+.pause-btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+.pause-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+.formula{overflow-x:auto}
+/* aviso de girar el celular */
+#rotateOv{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px;
+  background:var(--grain, none),rgba(20,26,53,.97);color:var(--cream);font-family:var(--hand);font-size:26px;text-align:center}
+#rotateOv p{margin:0}
+#rotateOv .phone{width:46px;height:80px;border:4px solid var(--gold);border-radius:10px;animation:turn 2s ease-in-out infinite}
+@keyframes turn{0%,25%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
+@media (prefers-reduced-motion:reduce){ #rotateOv .phone{animation:none;transform:rotate(-90deg)} }
 #touch{display:none;max-width:900px;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 14px;color:#d8ccb4;font-size:14px;text-align:center}
 body.touch #touch{display:flex}
 body.touch #keys{display:none}
@@ -159,7 +182,7 @@ body.touch #keys{display:none}
 @media (orientation:landscape) and (max-height:600px){
   body.touch{padding:6px;gap:8px}
   body.touch .top{display:none}
-  body.touch #wrap{max-width:min(900px,calc((100vh - 12px) * 1.5))}
+  body.touch #wrap{max-width:min(900px,calc((100vh - 12px) * 1.5));max-width:min(900px,calc((100dvh - 12px) * 1.5))}
 }
 #wrap:fullscreen{max-width:none;border:0;border-radius:0;display:flex;align-items:center;justify-content:center;background:var(--night)}
 #wrap:fullscreen #c{width:min(100vw,150vh)}

@@ -20,6 +20,7 @@
 
 <main id="wrap">
   <canvas id="c" width="900" height="600"></canvas>
+  <button id="pauseBtn" class="pause-btn" aria-label="Pausa y fórmula" title="Pausa y fórmula (P)" hidden>❚❚</button>
   <div id="ov">
     <div class="ov-grid">
       <section class="intro" id="intro">
@@ -45,6 +46,7 @@
           <button class="ghost small" data-show="aviso">Avisos</button>
         </div>
         <p class="who" id="who" hidden></p>
+        <p class="hint touch-only">En celular: juega con el teléfono de lado y sube el volumen. En iPhone, si no oyes nada, quita el modo silencio.</p>
       </section>
 
       <section class="panel" id="reg" hidden>
@@ -91,6 +93,26 @@
         <h2 class="title small" data-split>Tabla de posiciones</h2>
         <div class="paper tape info board" id="boardMain"></div>
         <div class="cta"><button class="ghost" data-show="intro">Volver</button><button class="ghost small" id="csvBtn" hidden>Descargar datos (CSV)</button></div>
+      </section>
+
+      <section class="panel" id="pausa" hidden>
+        <div class="eyebrow" id="pausaLvl">pausa</div>
+        <h2 class="title small" data-split>Pausa</h2>
+        <div class="paper tape info">
+          <div class="card-h">La fórmula en este momento</div>
+          <div class="formula" id="pausaEq"></div>
+          <p class="vars" id="pausaNote"></p>
+          <div class="card-h">¿Por qué?</div>
+          <p id="pausaWhy"></p>
+        </div>
+        <div class="cta">
+          <button id="resumeBtn">Seguir</button>
+          <button class="ghost small" id="pHelp">Explicación</button>
+          <button class="ghost small" id="pRestart">Reiniciar nivel</button>
+          <button class="ghost small" id="pSkip">Saltar explicación</button>
+          <button class="ghost small" id="pFs" hidden>Pantalla completa</button>
+          <button class="ghost small" id="pQuit">Salir al menú</button>
+        </div>
       </section>
 
       <section class="outro" id="outro" hidden>
@@ -145,17 +167,20 @@
   <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas: empujar</span>
   <span><kbd>Shift</kbd> empuje fino</span>
   <span><kbd>Espacio</kbd> frenar</span>
+  <span><kbd>P</kbd> pausa y fórmula</span>
   <span><kbd>H</kbd> ver la explicación</span>
   <span><kbd>R</kbd> reiniciar nivel</span>
   <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> saltar nivel (no cuenta para la tabla)</span>
 </footer>
 <footer id="touch">
   <span class="rotate">Gira tu celular de lado para jugar más cómodo.</span>
-  <span>Lado izquierdo: arrastra el dedo para empujar · lado derecho: mantén el dedo para frenar</span>
+  <span>Lado izquierdo: arrastra el dedo para empujar · lado derecho: mantén el dedo para frenar · ❚❚ pausa y fórmula</span>
   <button class="ghost small" data-cmd="KeyH">Explicación</button>
   <button class="ghost small" data-cmd="KeyR">Reiniciar nivel</button>
   <button class="ghost small" id="fsBtn" hidden>Pantalla completa</button>
 </footer>
+
+<div id="rotateOv" hidden><div class="phone" aria-hidden="true"></div><p>Gira tu celular de lado para jugar</p></div>
 
 <script src="vendor/katex/katex.min.js"></script>
 <script src="js/juego.js"></script>

@@ -1,7 +1,11 @@
 // ---------- constantes ----------
 const C = 250;            // velocidad del sonido en el gas de la nebulosa (px/s)
 const W = 900, H = 600;
-const TOP = 104, BOT = H - 72; // zona de juego entre la nota de arriba y la de abajo
+let TOP = 104; const BOT = H - 72; // zona de juego entre la nota de arriba y la de abajo (en celular la nota de arriba es más alta)
+// FS: tamaño de letra del canvas. En celular el juego se ve más chico, así que la letra crece un 25 %
+let FS = 1;
+const fz = n => (n * FS).toFixed(1) + 'px ';
+const sf = font => FS === 1 ? font : font.replace(/([\d.]+)px/, (_, n) => (n * FS).toFixed(1) + 'px');
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const DPR = Math.min(2, window.devicePixelRatio || 1);
 cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -49,6 +53,7 @@ function doppler(f, src, obs) {
 // ---------- audio ----------
 let audio = null, refOn = true;
 function initAudio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {} // iPhone: suena aunque esté en silencio
   const ac = new (window.AudioContext || window.webkitAudioContext)();
   const master = ac.createGain(); master.gain.value = 0.3; master.connect(ac.destination);
   const voice = type => {
@@ -103,6 +108,8 @@ addEventListener('keydown', e => {
   if (e.target.closest && e.target.closest('input, textarea')) return; // escribiendo en el registro
   keys[e.code] = true;
   if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+  if (!e.repeat && (e.code === 'KeyP' || (e.code === 'Escape' && state === 'pause'))) { state === 'pause' ? resumeGame() : pauseGame(); return; }
+  if (state === 'pause') return;
   if (state === 'tut') {
     if (!e.repeat && ['Enter', 'Space', 'ArrowRight'].includes(e.code)) nextTut();
     if (e.code === 'Escape') endTut();
@@ -128,7 +135,7 @@ function command(code) {
 // En el lado derecho, mantener el dedo frena.
 const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0, ax: 0, ay: 0 }, JOY_R = 56;
 let brakeId = null, touchMode = false;
-function setTouch(on) { touchMode = on; document.body.classList.toggle('touch', on); }
+function setTouch(on) { touchMode = on; FS = on ? 1.25 : 1; TOP = on ? 122 : 104; document.body.classList.toggle('touch', on); }
 setTouch(matchMedia('(pointer: coarse)').matches);
 const toCanvas = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
 cv.addEventListener('pointerdown', e => {
@@ -649,7 +656,7 @@ function wrapLines(text, maxW) {
 // texto sobre el cielo: relleno claro con borde de tinta, como calcomanía
 function fitText(text, x, y, font, color) {
   if (!text) return;
-  ctx.font = font; ctx.textAlign = 'center';
+  ctx.font = sf(font); ctx.textAlign = 'center';
   const w = ctx.measureText(text).width, px = Math.min(W - 8 - w / 2, Math.max(8 + w / 2, x)), py = Math.min(H - 8, Math.max(16, y));
   ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(20,16,30,.9)'; ctx.strokeText(text, px, py);
   ctx.fillStyle = color; ctx.fillText(text, px, py);
@@ -658,9 +665,9 @@ function fitText(text, x, y, font, color) {
 function labelStack(o, r, items, bottom = BOT - 8, above = false) {
   items = items.filter(it => it.text);
   if (!items.length) return;
-  const lh = 18, h = items.length * lh + 10;
+  const lh = 18 * FS, h = items.length * lh + 10;
   let w = 0;
-  for (const it of items) { ctx.font = it.font || '14px ' + BODY; w = Math.max(w, ctx.measureText(it.text).width); }
+  for (const it of items) { ctx.font = sf(it.font || '14px ' + BODY); w = Math.max(w, ctx.measureText(it.text).width); }
   const yBelow = o.y + r + 8, yAbove = o.y - r - 8 - h;
   let y = above ? (yAbove < TOP ? yBelow : yAbove) : (yBelow + h > bottom ? yAbove : yBelow);
   y = Math.max(TOP, Math.min(y, bottom - h));
@@ -668,7 +675,7 @@ function labelStack(o, r, items, bottom = BOT - 8, above = false) {
   ctx.save(); ctx.translate(x, y + h / 2); ctx.rotate((hash(seed) - .5) * .06);
   paper(-bw / 2, -h / 2, bw, h, seed, { sh: 2.5, j: 1.3 });
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  items.forEach((it, i) => { ctx.font = it.font || '14px ' + BODY; ctx.fillStyle = it.color || COL.ink; ctx.fillText(it.text, 0, -h / 2 + 5 + lh * i + lh / 2 + 1); });
+  items.forEach((it, i) => { ctx.font = sf(it.font || '14px ' + BODY); ctx.fillStyle = it.color || COL.ink; ctx.fillText(it.text, 0, -h / 2 + 5 + lh * i + lh / 2 + 1); });
   ctx.restore(); ctx.textBaseline = 'alphabetic';
 }
 // qué decirle al jugador según lo que se oye y cómo se mueve (vr > 0 = acercándose)
@@ -1185,31 +1192,33 @@ function drawTut() {
 
   // nota de arriba: la explicación
   ctx.textAlign = 'left';
-  ctx.font = 'bold 21px ' + BODY; const capL = wrapLines(sc.cap, W - 150);
-  ctx.font = '15.5px ' + BODY; const subL = wrapLines(sc.sub, W - 72);
-  paper(16, 12, W - 32, 50 + capL.length * 26 + subL.length * 20, 101, { tape: [[70, 13, -.15], [W - 80, 14, .12]] });
+  const capF = touchMode ? 24 : 21, subF = touchMode ? 18 : 15.5, capH = capF + 5, subH = subF + 4.5;
+  ctx.font = `bold ${capF}px ` + BODY; const capL = wrapLines(sc.cap, W - 150);
+  ctx.font = `${subF}px ` + BODY; const subL = wrapLines(sc.sub, W - 72);
+  paper(16, 12, W - 32, 50 + capL.length * capH + subL.length * subH, 101, { tape: [[70, 13, -.15], [W - 80, 14, .12]] });
   ctx.font = '17px ' + HAND; ctx.fillStyle = COL.rustD;
   ctx.fillText(`explicación · nivel ${tut.level + 1}`, 34, 40);
   tut.scenes.forEach((_, k) => {
-    const dx = W - 44 - (tut.scenes.length - 1 - k) * 18;
+    const dx = W - 104 - (tut.scenes.length - 1 - k) * 18; // a la izquierda del botón de pausa
     sketchCircle(dx, 34, k === tut.i ? 5.5 : 4.5, 60 + k, .5);
     ctx.fillStyle = k <= tut.i ? COL.ink : 'rgba(46,36,51,0)'; ctx.fill();
     ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.stroke();
   });
   let y = 68;
-  ctx.font = 'bold 21px ' + BODY; ctx.fillStyle = COL.ink;
-  for (const l of capL) { ctx.fillText(l, 34, y); y += 26; }
-  ctx.font = '15.5px ' + BODY; ctx.fillStyle = COL.ink2;
-  for (const l of subL) { ctx.fillText(l, 34, y); y += 20; }
+  ctx.font = `bold ${capF}px ` + BODY; ctx.fillStyle = COL.ink;
+  for (const l of capL) { ctx.fillText(l, 34, y); y += capH; }
+  ctx.font = `${subF}px ` + BODY; ctx.fillStyle = COL.ink2;
+  for (const l of subL) { ctx.fillText(l, 34, y); y += subH; }
 
   // la cinta: cada rayita es una onda; juntas = agudo, separadas = grave
   const top = 446, x0 = 168, x1 = 752;
   const toX = t => x1 - (s.t - t) * (x1 - x0) / TAPE_S;
   paper(16, top, W - 32, H - top - 14, 202);
-  ctx.font = '16px ' + HAND; ctx.fillStyle = COL.ink2; ctx.textAlign = 'left';
-  ctx.fillText('la cinta: cada rayita es un anillo que llega — juntas = agudo, separadas = grave', 34, top + 24);
+  const tapeTitle = 'la cinta: cada rayita es un anillo que llega — juntas = agudo, separadas = grave';
+  ctx.textAlign = 'left'; fitFont(tapeTitle, '', 16 * FS, 12, W - 72, HAND); ctx.fillStyle = COL.ink2;
+  ctx.fillText(tapeTitle, 34, top + 24);
   const row = (yy, label, times, color, value, valColor, seed) => {
-    ctx.textAlign = 'left'; ctx.font = 'bold 15px ' + BODY; ctx.fillStyle = COL.ink; ctx.fillText(label, 34, yy + 5);
+    ctx.textAlign = 'left'; fitFont(label, 'bold', 15 * FS, 11, x0 - 44); ctx.fillStyle = COL.ink; ctx.fillText(label, 34, yy + 5);
     ctx.beginPath(); ctx.rect(x0, yy - 13, x1 - x0, 26); ctx.fillStyle = COL.paper2; ctx.fill();
     ctx.strokeStyle = 'rgba(46,36,51,.45)'; ctx.lineWidth = 1.2; ctx.stroke();
     // todas las rayitas iguales y rectas: solo su separación dice algo (el tiempo entre una onda y la siguiente)
@@ -1223,8 +1232,8 @@ function drawTut() {
   const toneC = heard ? toneInk(heard, s.base) : COL.ink;
   row(top + 52, 'sin moverse', s.emits, COL.ink2, s.base + ' Hz', COL.ink2, 210);
   row(top + 90, s.mode === 'B' ? 'el cristal oye' : 'tú oyes', s.hits, toneC, sc.mute ? '—' : heard ? heard.toFixed(0) + ' Hz' : '…', toneC, 220);
-  ctx.font = 'italic 13px ' + BODY; ctx.fillStyle = COL.ink2; ctx.textAlign = 'center';
-  ctx.fillText(touchMode ? 'toca la pantalla para seguir' : 'clic, Enter o → para seguir · Esc para saltar', W / 2, H - 24);
+  ctx.font = 'italic ' + fz(13) + BODY; ctx.fillStyle = COL.ink2; ctx.textAlign = 'center';
+  ctx.fillText(touchMode ? 'toca la pantalla para seguir · ❚❚ para saltar' : 'clic, Enter o → para seguir · Esc para saltar', W / 2, H - 24);
   filmGrain();
 }
 
@@ -1238,6 +1247,8 @@ function loadLevel(i) {
 }
 const ov = document.getElementById('ov');
 const $ = id => document.getElementById(id);
+const portraitSmall = matchMedia('(orientation: portrait) and (max-width: 700px)');
+const rotateOv = $('rotateOv'), pauseBtn = $('pauseBtn');
 
 // ---------- registro, avisos y tabla de posiciones ----------
 // Para juntar los datos de todos en una hoja de cálculo de Google, pega aquí la URL del Apps Script
@@ -1291,13 +1302,13 @@ async function renderBoard(el) {
 }
 
 // pantallas del menú: solo una a la vez a la izquierda; el equipo siempre a la derecha
-const PANELS = ['intro', 'outro', 'reg', 'aviso', 'tabla'];
+const PANELS = ['intro', 'outro', 'reg', 'aviso', 'tabla', 'pausa'];
 let panel = 'intro', avisoBack = 'intro';
 function show(id) {
   if (id === 'aviso' && panel !== 'aviso') avisoBack = panel;
   panel = id;
   for (const k of PANELS) $(k).hidden = k !== id;
-  document.querySelector('.ov-grid').classList.toggle('solo', id === 'outro' || id === 'aviso');
+  document.querySelector('.ov-grid').classList.toggle('solo', id === 'outro' || id === 'aviso' || id === 'pausa');
   if (id === 'tabla') renderBoard($('boardMain'));
   if (id === 'reg') $('regErr').textContent = '';
   ov.scrollTop = 0;
@@ -1370,13 +1381,41 @@ function win() {
 
 // botones táctiles y pantalla completa
 document.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => command(b.dataset.cmd));
-if (document.fullscreenEnabled) {
-  $('fsBtn').hidden = false;
-  $('fsBtn').onclick = () => {
-    if (document.fullscreenElement) return document.exitFullscreen();
-    $('wrap').requestFullscreen().then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {});
-  };
+function toggleFS() {
+  if (document.fullscreenElement) return document.exitFullscreen();
+  $('wrap').requestFullscreen().then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {});
 }
+if (document.fullscreenEnabled) {
+  $('fsBtn').hidden = $('pFs').hidden = false;
+  $('fsBtn').onclick = toggleFS;
+}
+
+// ---------- pausa: muestra la fórmula con los números de ese momento y las opciones ----------
+let prevState = null;
+function pauseGame() {
+  if (state !== 'play' && state !== 'tut') return;
+  prevState = state; state = 'pause'; setAudio(0, 0, 0);
+  joy.id = brakeId = null; joy.ax = joy.ay = 0; for (const k in keys) keys[k] = false;
+  const e = eqNow(prevState);
+  tex(e.s || '\\text{—}', $('pausaEq'), true); tex(e.note, $('pausaNote'));
+  const inTut = prevState === 'tut';
+  $('pausaLvl').textContent = inTut ? `explicación · nivel ${tut.level + 1}` : lvl.name;
+  $('pausaWhy').textContent = inTut ? tut.scenes[tut.i].cap : lvl.hud().why.replace(/^Por qué: /, '');
+  $('pHelp').hidden = $('pRestart').hidden = inTut;
+  $('pSkip').hidden = !inTut;
+  show('pausa'); ov.hidden = false;
+}
+function resumeGame() {
+  if (state !== 'pause') return;
+  state = prevState; ov.hidden = true;
+}
+pauseBtn.onclick = () => { pauseBtn.blur(); pauseGame(); };
+$('resumeBtn').onclick = resumeGame;
+$('pHelp').onclick = () => { resumeGame(); command('KeyH'); };
+$('pRestart').onclick = () => { resumeGame(); command('KeyR'); };
+$('pSkip').onclick = () => { resumeGame(); endTut(); };
+$('pFs').onclick = toggleFS;
+$('pQuit').onclick = () => { state = 'menu'; run = null; rings = []; setAudio(0, 0, 0); show('intro'); ov.hidden = false; };
 
 // ---------- dibujo ----------
 function drawFrame() {
@@ -1430,7 +1469,7 @@ function drawTouch() {
   ctx.save(); ctx.globalAlpha = on ? .95 : .5;
   sketchCircle(bx, by, 22, 91, 1); ctx.fillStyle = on ? COL.rust : 'rgba(239,227,200,.2)'; ctx.fill();
   ctx.strokeStyle = COL.cream; ctx.lineWidth = 1.6; ctx.stroke();
-  ctx.font = '14px ' + HAND; ctx.fillStyle = COL.cream; ctx.textAlign = 'center'; ctx.fillText('frenar', bx, by + 5);
+  ctx.font = '16px ' + HAND; ctx.fillStyle = COL.cream; ctx.textAlign = 'center'; ctx.fillText('frenar', bx, by + 5);
   ctx.restore();
   if (joy.id === null) return;
   ctx.save(); ctx.globalAlpha = .6;
@@ -1444,22 +1483,26 @@ function drawTouch() {
 
 function drawHud(h) {
   // nota de arriba: qué hacer ahora y qué se oye
-  const rx = W - 196;
-  paper(16, 10, W - 32, 86, 11, { tape: [[64, 11, -.14], [W - 74, 12, .1]] });
+  const rx = W - 196, hh = touchMode ? 106 : 86;
+  paper(16, 10, W - 32, hh, 11, { tape: [[64, 11, -.14], [W - 74, 12, .1]] });
   ctx.textAlign = 'left';
-  ctx.font = '19px ' + HAND; ctx.fillStyle = COL.rustD; ctx.fillText(lvl.name, 34, 37);
+  ctx.font = fz(19) + HAND; ctx.fillStyle = COL.rustD; ctx.fillText(lvl.name, 34, 37);
   const nw = ctx.measureText(lvl.name).width;
-  ctx.font = '15px ' + HAND; ctx.fillStyle = COL.ink2; ctx.fillText('— ' + h.step, 34 + nw + 10, 37);
-  fitFont(h.tip, 'bold', 20, 12, rx - 64); ctx.fillStyle = COL.ink; ctx.fillText(h.tip, 34, 62);
-  fitFont(h.why, 'italic', 14.5, 10, rx - 64); ctx.fillStyle = COL.ink2; ctx.fillText(h.why, 34, 83);
+  ctx.font = fz(15) + HAND; ctx.fillStyle = COL.ink2; ctx.fillText('— ' + h.step, 34 + nw + 10, 37);
+  fitFont(h.tip, 'bold', 20 * FS, 12, rx - 64); ctx.fillStyle = COL.ink; ctx.fillText(h.tip, 34, touchMode ? 65 : 62);
+  if (touchMode) { // en celular el "por qué" va más grande, en hasta dos renglones
+    ctx.font = 'italic 19px ' + BODY; let lines = wrapLines(h.why, rx - 60);
+    if (lines.length > 2) { ctx.font = 'italic 16px ' + BODY; lines = wrapLines(h.why, rx - 60).slice(0, 2); }
+    ctx.fillStyle = COL.ink2; lines.forEach((l, i) => ctx.fillText(l, 34, 88 + i * 20));
+  } else { fitFont(h.why, 'italic', 14.5, 10, rx - 64); ctx.fillStyle = COL.ink2; ctx.fillText(h.why, 34, 83); }
   ctx.strokeStyle = 'rgba(46,36,51,.4)'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(rx - 18, 22); ctx.quadraticCurveTo(rx - 14 + hash(boil) * 2, 52, rx - 19, 86); ctx.stroke();
-  ctx.font = '17px ' + HAND; ctx.fillStyle = COL.ink2; ctx.fillText(h.who, rx, 34);
+  ctx.beginPath(); ctx.moveTo(rx - 18, 22); ctx.quadraticCurveTo(rx - 14 + hash(boil) * 2, 52, rx - 19, 10 + hh); ctx.stroke();
+  ctx.font = fz(17) + HAND; ctx.fillStyle = COL.ink2; ctx.fillText(h.who, rx, 34);
   const val = fmt(h.heard);
-  ctx.font = 'bold 36px ' + HAND; ctx.fillStyle = h.ok ? COL.sageD : toneInk(h.heard, h.base); ctx.fillText(val, rx, 68);
+  ctx.font = 'bold ' + fz(36) + HAND; ctx.fillStyle = h.ok ? COL.sageD : toneInk(h.heard, h.base); ctx.fillText(val, rx, touchMode ? 74 : 68);
   const vw = ctx.measureText(val).width;
-  ctx.font = '17px ' + HAND; ctx.fillStyle = COL.ink2; ctx.fillText('Hz', rx + vw + 6, 68);
-  if (h.goal) { ctx.font = 'bold 14px ' + BODY; ctx.fillStyle = COL.sageD; ctx.fillText('meta: ' + h.goal, rx, 87); }
+  ctx.font = fz(17) + HAND; ctx.fillStyle = COL.ink2; ctx.fillText('Hz', rx + vw + 6, touchMode ? 74 : 68);
+  if (h.goal) { ctx.font = 'bold ' + fz(14) + BODY; ctx.fillStyle = COL.sageD; ctx.fillText('meta: ' + h.goal, rx, touchMode ? 100 : 87); }
   drawMeter(h);
 }
 
@@ -1471,10 +1514,10 @@ function drawMeter(h) {
   whale(46, py + 24);
   ctx.textAlign = 'left';
   ctx.font = '17px ' + HAND; ctx.fillStyle = COL.rustD; ctx.fillText('grave', 74, py + 26);
-  ctx.font = '12px ' + BODY; ctx.fillStyle = COL.ink2; ctx.fillText('alejarte', 74, py + 42);
+  ctx.font = fz(12) + BODY; ctx.fillStyle = COL.ink2; ctx.fillText('alejarte', 74, py + 42);
   bird(522, py + 26);
   ctx.font = '17px ' + HAND; ctx.fillStyle = COL.skyD; ctx.fillText('agudo', 548, py + 26);
-  ctx.font = '12px ' + BODY; ctx.fillStyle = COL.ink2; ctx.fillText('acercarte', 548, py + 42);
+  ctx.font = fz(12) + BODY; ctx.fillStyle = COL.ink2; ctx.fillText('acercarte', 548, py + 42);
 
   roughRect(mx - 6, my - 9, mw + 12, 18, 61, 1.2);
   ctx.fillStyle = COL.paper2; ctx.fill();
@@ -1499,7 +1542,7 @@ function drawMeter(h) {
     const x = toX(h.base * m);
     ctx.beginPath(); ctx.moveTo(x, my + 8); ctx.lineTo(x, my + (m === 1 ? -8 : 2)); ctx.stroke();
   });
-  ctx.font = '11.5px ' + BODY; ctx.fillStyle = COL.ink2; ctx.textAlign = 'center';
+  ctx.font = fz(11.5) + BODY; ctx.fillStyle = COL.ink2; ctx.textAlign = 'center';
   for (const m of [.5, 1, 2]) ctx.fillText(h.base * m, toX(h.base * m), py + 51);
   // banderita de la meta
   if (za !== undefined) {
@@ -1530,7 +1573,7 @@ function drawMeter(h) {
       ctx.beginPath(); ctx.moveTo(-26, 9); ctx.lineTo(-31, -2); ctx.lineTo(-26, -12); ctx.lineTo(-21, -2); ctx.closePath();
       ctx.fillStyle = s.done ? COL.sage : s.cur ? COL.lilac : 'rgba(180,154,209,.35)'; ctx.fill(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.6; ctx.stroke();
     } else drawLock(-26, -4, s.done, s.done ? COL.sage : s.cur ? COL.gold : '#b9a98a');
-    ctx.font = 'bold 13.5px ' + BODY; ctx.fillStyle = s.cur || s.done ? COL.ink : COL.ink2; ctx.textAlign = 'left'; ctx.fillText(s.label, -14, 5);
+    ctx.textAlign = 'left'; fitFont(s.label, 'bold', 13.5 * FS, 10, 54); ctx.fillStyle = s.cur || s.done ? COL.ink : COL.ink2; ctx.fillText(s.label, -14, 5);
     if (s.done) { // palomita de plumón
       ctx.strokeStyle = COL.sageD; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.beginPath(); ctx.moveTo(22, -2); ctx.lineTo(27, 5); ctx.lineTo(36, -10); ctx.stroke();
@@ -1544,8 +1587,8 @@ function drawMsgs() {
   let y = 178;
   for (const m of msgs) {
     const a = Math.max(0, Math.min(1, m.t / 0.5, (m.dur - m.t) / 0.2));
-    if (m.big) fitFont(m.text, 'bold', 34, 14, W - 160, HAND); else fitFont(m.text, 'bold', 17, 11, W - 160);
-    const tw = ctx.measureText(m.text).width, bh = m.big ? 54 : 36, bw = tw + 46, n = 12;
+    if (m.big) fitFont(m.text, 'bold', 34, 14, W - 160, HAND); else fitFont(m.text, 'bold', 17 * FS, 11, W - 160);
+    const tw = ctx.measureText(m.text).width, bh = m.big ? 54 : 36 * FS, bw = tw + 46, n = 12;
     const drop = (1 - Math.min(1, (m.dur - m.t) / 0.3)) * -12, seed = hstr(m.text);
     ctx.save(); ctx.globalAlpha = a; ctx.translate(W / 2, y + drop); ctx.rotate((hash(seed) - .5) * .05);
     const ribbon = (ox, oy) => {
@@ -1566,25 +1609,29 @@ function drawMsgs() {
 // hoja "antes de empezar": rol, objetivo y reglas del nivel
 function drawBrief() {
   drawFrame();
-  const b = lvl.brief, cw = 620, ch = 348, x = (W - cw) / 2, y = (H - ch) / 2 + 6;
+  const b = lvl.brief, cw = 620, ch = touchMode ? 400 : 348, x = (W - cw) / 2, y = (H - ch) / 2 + 6;
   ctx.fillStyle = 'rgba(12,10,26,.55)'; ctx.fillRect(0, 0, W, H);
   ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-.012); ctx.translate(-W / 2, -H / 2);
   paper(x, y, cw, ch, 77, { tape: [[W / 2 - 120, y + 2, -.08], [W / 2 + 130, y + 3, .1]] });
   ctx.textAlign = 'left';
   ctx.font = '18px ' + HAND; ctx.fillStyle = COL.rustD; ctx.fillText('antes de empezar…', x + 36, y + 44);
   ctx.font = 'bold 40px ' + HAND; ctx.fillStyle = COL.ink; ctx.fillText(lvl.name, x + 34, y + 88);
-  fitFont(b.role, '', 17, 12, cw - 72); ctx.fillStyle = COL.ink2; ctx.fillText(b.role, x + 36, y + 120);
+  fitFont(b.role, '', 17 * FS, 12, cw - 72); ctx.fillStyle = COL.ink2; ctx.fillText(b.role, x + 36, y + 120);
   // el objetivo, subrayado con plumón verde
-  fitFont(b.goal, 'bold', 17, 12, cw - 170); const gw = ctx.measureText(b.goal).width;
+  fitFont(b.goal, 'bold', 17 * FS, 12, cw - 170); const gw = ctx.measureText(b.goal).width;
   ctx.strokeStyle = 'rgba(143,181,122,.65)'; ctx.lineWidth = 16; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(x + 128, y + 160); ctx.quadraticCurveTo(x + 128 + gw / 2, y + 156 + hash(boil) * 2, x + 140 + gw, y + 159); ctx.stroke();
   ctx.fillStyle = COL.ink; ctx.fillText(b.goal, x + 134, y + 165);
   ctx.font = '17px ' + HAND; ctx.fillStyle = COL.sageD; ctx.fillText('objetivo:', x + 36, y + 165);
   b.rules.forEach(([color, text], k) => {
-    const ry = y + 210 + k * 34;
+    const ry = y + 210 + k * 34 * FS;
     sketchCircle(x + 46, ry - 5, 6.5, 500 + k, .8); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.6; ctx.stroke();
-    ctx.font = '16.5px ' + BODY; ctx.fillStyle = COL.ink; ctx.fillText(text, x + 64, ry);
+    fitFont(text, '', 16.5 * FS, 12, cw - 100); ctx.fillStyle = COL.ink; ctx.fillText(text, x + 64, ry);
   });
+  if (touchMode) {
+    const t = 'izquierda: arrastra para moverte · derecha: mantén para frenar · ❚❚ pausa';
+    fitFont(t, 'italic', 18, 11, cw - 72); ctx.fillStyle = COL.ink2; ctx.fillText(t, x + 36, y + 324);
+  }
   // botón de papel naranja que se mece
   const bob = Math.sin(performance.now() / 260) * 2, bw = 290, bx = W / 2 - bw / 2, by = y + ch - 58 + bob;
   roughRect(bx + 4, by + 4, bw, 40, 88, 1.6); ctx.fillStyle = COL.ink; ctx.fill();
@@ -1612,6 +1659,12 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   boil = Math.floor(now / 125);
+  // celular en vertical: el juego se detiene y se pide girarlo
+  const needRotate = touchMode && portraitSmall.matches && (state === 'play' || state === 'tut' || state === 'brief');
+  if (rotateOv.hidden === needRotate) rotateOv.hidden = !needRotate;
+  const showPause = state === 'play' || state === 'tut';
+  if (pauseBtn.hidden === showPause) pauseBtn.hidden = !showPause;
+  if (needRotate) { setAudio(0, 0, 0); requestAnimationFrame(frame); return; }
   if (state === 'play') {
     time += dt;
     shake = Math.max(0, shake - dt);
@@ -1622,7 +1675,7 @@ function frame(now) {
     if (done) { if (cur + 1 < levels.length) startTut(cur + 1); else win(); }
   } else if (state === 'tut') tutFrame(dt);
   else if (state === 'brief') drawBrief();
-  else drawAmbient(dt);
+  else if (state !== 'pause') drawAmbient(dt); // en pausa se queda quieto el último cuadro
   updateEq(dt);
   requestAnimationFrame(frame);
 }
@@ -1649,18 +1702,22 @@ function eqFor(f, src, lis, who) {
   if (vf >= C) return `v_f = ${vf}\\ \\text{px/s} \\ \\ge\\ c = ${C}\\ \\text{px/s} \\quad\\Rightarrow\\quad \\text{${who} aún no recibe el sonido}`;
   return `f' = f\\,\\dfrac{c + v_o}{c - v_f} = ${f}\\cdot\\dfrac{${C} ${plus(vo)}}{${C} ${minus(vf)}} \\approx ${Math.max(0, f * (C + vo) / (C - vf)).toFixed(0)}\\ \\text{Hz}`;
 }
-function updateEq(dt) {
+function eqNow(st) {
   let s = '', note = '';
-  if (state === 'play') {
+  if (st === 'play') {
     if (cur === 0) { s = eqFor(400, lvl.src, P, 'el oyente'); note = '\\text{Tú eres el oyente } (v_o) \\text{ y la estrella está quieta } (v_f = 0)'; }
     else if (cur === 1) {
       const c = lvl.crystals[lvl.i];
       if (c) { s = eqFor(300, P, c, 'el cristal'); note = '\\text{Tú eres la fuente } (v_f) \\text{ y el cristal está quieto } (v_o = 0)'; }
     } else { s = eqFor(350, lvl.src, P, 'el oyente'); note = '\\text{El cometa es la fuente } (v_f) \\text{ y tú el oyente } (v_o) \\text{: los dos cuentan}'; }
-  } else if (state === 'tut' && sim) {
+  } else if (st === 'tut' && sim) {
     s = eqFor(sim.base, sim.src, sim.lis, sim.mode === 'B' ? 'el cristal' : 'el oyente');
     note = 'v > 0 \\text{: se acercan} \\qquad v < 0 \\text{: se alejan}';
   }
+  return { s, note };
+}
+function updateEq(dt) {
+  const { s, note } = eqNow(state);
   eqBox.hidden = !s;
   if (!s || (eqT -= dt) > 0) return;
   eqT = .15;
