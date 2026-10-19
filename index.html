@@ -15,7 +15,7 @@
     <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5c1.8 4.6 3.4 8.6 5.2 11.6 4.4.4 8.4.6 11.6 1.4-3 3.4-6.2 6-9 8.8.9 4.4 2 8.6 2.4 11.4-4-2.2-7.4-4.6-10.4-6.4-3.4 2-6.6 4.2-10.2 6.2.8-3.8 1.8-7.6 2.6-11.4C9 22.400 6 19.800 3 16.600c3.800-.6 7.800-1 11.400-1.400C16.400 11.400 18 7.400 20 3.500z" fill="#e6b85c" stroke="#2e2433" stroke-width="2.2" stroke-linejoin="round"/></svg>
     <span>Equipo <b>Estrellas</b></span>
   </div>
-  <div class="badge paper">Avance · maqueta jugable</div>
+  <div class="badge paper">Avance</div>
 </header>
 
 <main id="wrap">
@@ -28,23 +28,23 @@
           <h1 class="title" data-split>Doppler <span class="lock">Lock</span></h1>
           <svg class="scribble" viewBox="0 0 330 14" aria-hidden="true"><path d="M4 9C60 4 118 12 176 7s104-5 148 0" fill="none" stroke="#e9964a" stroke-width="3.5" stroke-linecap="round"/></svg>
         </div>
-        <p class="lead">Un juego para <b>escuchar</b> el efecto Doppler: el tono cambia según cómo te mueves.</p>
+        <p class="lead">Un juego para <b>escuchar</b> el efecto Doppler: el tono cambia según cómo te mueves. Usa audífonos.</p>
         <div class="paper tape info">
           <div class="card-h">¿Sonido en el espacio?</div>
-          <p>En el vacío, no: no hay nada que vibre. Tu nave cruza una <b>nebulosa</b>, una nube de gas. Una nebulosa real es tan poco densa que no oirías nada, así que aquí imaginamos un gas más denso por el que el sonido viaja lento (<span class="tex">c = 250\ \text{px/s}</span>). La antena de tu nave lo escucha.</p>
-          <div class="legend"><span><span class="dot b"></span>azul = más agudo</span><span><span class="dot r"></span>rojizo = más grave</span><span>(los colores solo son una guía: el sonido no tiene color)</span></div>
+          <p>En el vacío, no: no hay nada que vibre. Tu nave cruza una <b>nebulosa</b>; imaginamos su gas más denso que en la realidad para que el sonido viaje por él (lento: <span class="tex">c = 250\ \text{px/s}</span>) y la antena de tu nave lo escuche.</p>
+          <div class="legend"><span><span class="dot b"></span>azul = más agudo</span><span><span class="dot r"></span>rojizo = más grave</span><span>(solo es una guía de color)</span></div>
         </div>
         <ol class="levels">
           <li class="paper"><span class="n">nivel 1</span><b>La Estrella</b><small>tú escuchas</small></li>
           <li class="paper"><span class="n">nivel 2</span><b>Cristales</b><small>tú suenas</small></li>
           <li class="paper"><span class="n">nivel 3</span><b>El Cometa</b><small>los dos se mueven</small></li>
         </ol>
-        <div class="cta"><button id="startBtn">¡Empezar!</button><span class="hint">usa audífonos · cada nivel trae su explicación</span></div>
-        <p class="who" id="who" hidden></p>
-        <div class="links">
-          <button class="ghost small" data-show="tabla">Tabla de posiciones</button>
-          <button class="ghost small" data-show="aviso">Avisos y términos</button>
+        <div class="cta">
+          <button id="startBtn">¡Empezar!</button>
+          <button class="ghost small" data-show="tabla">Tabla</button>
+          <button class="ghost small" data-show="aviso">Avisos</button>
         </div>
+        <p class="who" id="who" hidden></p>
       </section>
 
       <section class="panel" id="reg" hidden>
@@ -97,7 +97,7 @@
         <div class="eyebrow">misión cumplida</div>
         <h1 class="title" data-split>¡Lo lograste!</h1>
         <p class="lead" id="outroLead">Pasaste los tres niveles de la nebulosa.</p>
-        <div class="paper board" id="boardOutro"></div>
+        <div class="outro-cols">
         <div class="paper tape info">
           <div class="card-h">La fórmula que usaste</div>
           <p class="formula"><span class="tex block">f' = f\,\dfrac{c + v_o}{c - v_f}</span></p>
@@ -107,7 +107,11 @@
           <p class="formula"><span class="tex block">\dfrac{\Delta\lambda}{\lambda} \approx \dfrac{v}{c_{\text{luz}}}</span></p>
           <p>Así sabemos que casi todas las galaxias lejanas se alejan de nosotros.</p>
         </div>
-        <div class="cta"><button id="againBtn">Jugar otra vez</button></div>
+        <div class="outro-side">
+          <div class="paper board" id="boardOutro"></div>
+          <div class="cta"><button id="againBtn">Jugar otra vez</button></div>
+        </div>
+        </div>
       </section>
 
       <aside class="paper tape team">
@@ -143,7 +147,7 @@
   <span><kbd>Espacio</kbd> frenar</span>
   <span><kbd>H</kbd> ver la explicación</span>
   <span><kbd>R</kbd> reiniciar nivel</span>
-  <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> saltar nivel (ese intento ya no cuenta para la tabla)</span>
+  <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> saltar nivel (no cuenta para la tabla)</span>
 </footer>
 <footer id="touch">
   <span class="rotate">Gira tu celular de lado para jugar más cómodo.</span>

@@ -1207,15 +1207,16 @@ function drawTut() {
   const toX = t => x1 - (s.t - t) * (x1 - x0) / TAPE_S;
   paper(16, top, W - 32, H - top - 14, 202);
   ctx.font = '16px ' + HAND; ctx.fillStyle = COL.ink2; ctx.textAlign = 'left';
-  ctx.fillText('la cinta: cada rayita es una onda que llega — juntas = agudo, separadas = grave', 34, top + 24);
+  ctx.fillText('la cinta: cada rayita es un anillo que llega — juntas = agudo, separadas = grave', 34, top + 24);
   const row = (yy, label, times, color, value, valColor, seed) => {
     ctx.textAlign = 'left'; ctx.font = 'bold 15px ' + BODY; ctx.fillStyle = COL.ink; ctx.fillText(label, 34, yy + 5);
-    roughRect(x0, yy - 13, x1 - x0, 26, seed, 1.2); ctx.fillStyle = COL.paper2; ctx.fill();
+    ctx.beginPath(); ctx.rect(x0, yy - 13, x1 - x0, 26); ctx.fillStyle = COL.paper2; ctx.fill();
     ctx.strokeStyle = 'rgba(46,36,51,.45)'; ctx.lineWidth = 1.2; ctx.stroke();
-    ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+    // todas las rayitas iguales y rectas: solo su separación dice algo (el tiempo entre una onda y la siguiente)
+    ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.lineCap = 'butt';
     for (const t of times) {
-      const x = toX(t), q = hash(t * 997);
-      if (x >= x0 + 3) { ctx.beginPath(); ctx.moveTo(x, yy - 8 - q * 2); ctx.lineTo(x + (q - .5) * 2.5, yy + 8 + q * 1.5); ctx.stroke(); }
+      const x = Math.round(toX(t) * DPR) / DPR;
+      if (x >= x0 + 3) { ctx.beginPath(); ctx.moveTo(x, yy - 9); ctx.lineTo(x, yy + 9); ctx.stroke(); }
     }
     ctx.font = '22px ' + HAND; ctx.fillStyle = valColor; ctx.fillText(value, x1 + 18, yy + 7);
   };
@@ -1296,6 +1297,7 @@ function show(id) {
   if (id === 'aviso' && panel !== 'aviso') avisoBack = panel;
   panel = id;
   for (const k of PANELS) $(k).hidden = k !== id;
+  document.querySelector('.ov-grid').classList.toggle('solo', id === 'outro' || id === 'aviso');
   if (id === 'tabla') renderBoard($('boardMain'));
   if (id === 'reg') $('regErr').textContent = '';
   ov.scrollTop = 0;
@@ -1494,8 +1496,8 @@ function drawMeter(h) {
   // rayitas de la regla
   ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
   [.5, .71, 1, 1.41, 2].forEach((m, i) => {
-    const x = toX(h.base * m) + (hash(i + 5) - .5) * 1.5;
-    ctx.beginPath(); ctx.moveTo(x, my + 8); ctx.lineTo(x + (hash(i) - .5) * 1.5, my + (m === 1 ? -8 : 2)); ctx.stroke();
+    const x = toX(h.base * m);
+    ctx.beginPath(); ctx.moveTo(x, my + 8); ctx.lineTo(x, my + (m === 1 ? -8 : 2)); ctx.stroke();
   });
   ctx.font = '11.5px ' + BODY; ctx.fillStyle = COL.ink2; ctx.textAlign = 'center';
   for (const m of [.5, 1, 2]) ctx.fillText(h.base * m, toX(h.base * m), py + 51);
@@ -1625,6 +1627,9 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+// la portada se diseñó a 900×600: se escala igual que el canvas para que siempre quepa
+new ResizeObserver(() => ov.style.setProperty('--k', cv.clientWidth / W)).observe(cv);
 
 // ---------- fórmulas en LaTeX (KaTeX, guardado en vendor/ para que funcione sin internet) ----------
 const tex = (src, el, block = false) => {
