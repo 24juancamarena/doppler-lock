@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doppler Lock</title>
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5c1.8 4.6 3.4 8.6 5.2 11.6 4.4.4 8.4.6 11.6 1.4-3 3.4-6.2 6-9 8.8.9 4.4 2 8.6 2.4 11.4-4-2.2-7.4-4.6-10.4-6.4-3.4 2-6.6 4.2-10.2 6.2.8-3.8 1.8-7.6 2.6-11.4C9 22.400 6 19.800 3 16.600c3.800-.6 7.800-1 11.400-1.400C16.400 11.400 18 7.400 20 3.500z" fill="#e6b85c" stroke="#2e2433" stroke-width="2.2" stroke-linejoin="round"/></svg>
+    <span>Equipo <b>Estrellas</b></span>
+  </div>
+  <div class="badge paper">Avance · maqueta jugable</div>
+</header>
+
+<main id="wrap">
+  <canvas id="c" width="900" height="600"></canvas>
+  <div id="ov">
+    <div class="ov-grid">
+      <section class="intro" id="intro">
+        <div class="eyebrow">el Equipo Estrellas presenta…</div>
+        <div>
+          <h1 class="title" data-split>Doppler <span class="lock">Lock</span></h1>
+          <svg class="scribble" viewBox="0 0 330 14" aria-hidden="true"><path d="M4 9C60 4 118 12 176 7s104-5 148 0" fill="none" stroke="#e9964a" stroke-width="3.5" stroke-linecap="round"/></svg>
+        </div>
+        <p class="lead">Un juego para <b>escuchar</b> el efecto Doppler: el tono cambia según cómo te mueves.</p>
+        <div class="paper tape info">
+          <div class="card-h">¿Sonido en el espacio?</div>
+          <p>En el vacío, no: no hay nada que vibre. Tu nave cruza una <b>nebulosa</b>, una nube de gas. Una nebulosa real es tan poco densa que no oirías nada, así que aquí imaginamos un gas más denso por el que el sonido viaja lento (c = 250 px/s). La antena de tu nave lo escucha.</p>
+          <div class="legend"><span><span class="dot b"></span>azul = más agudo</span><span><span class="dot r"></span>rojizo = más grave</span><span>(los colores solo son una guía: el sonido no tiene color)</span></div>
+        </div>
+        <ol class="levels">
+          <li class="paper"><span class="n">nivel 1</span><b>La Estrella</b><small>tú escuchas</small></li>
+          <li class="paper"><span class="n">nivel 2</span><b>Cristales</b><small>tú suenas</small></li>
+          <li class="paper"><span class="n">nivel 3</span><b>El Cometa</b><small>los dos se mueven</small></li>
+        </ol>
+        <div class="cta"><button id="startBtn">¡Empezar!</button><span class="hint">usa audífonos · cada nivel trae su explicación</span></div>
+        <p class="who" id="who" hidden></p>
+        <div class="links">
+          <button class="ghost small" data-show="tabla">Tabla de posiciones</button>
+          <button class="ghost small" data-show="aviso">Avisos y términos</button>
+        </div>
+      </section>
+
+      <section class="panel" id="reg" hidden>
+        <div class="eyebrow">antes de jugar</div>
+        <h2 class="title small" data-split>Registro</h2>
+        <form class="paper tape info form" id="regForm" novalidate>
+          <label>Nombre completo<input type="text" name="nombre" maxlength="60" autocomplete="name"></label>
+          <label>Grupo<input type="text" name="grupo" maxlength="12" placeholder="por ejemplo 3°B"></label>
+          <label>Correo institucional<input type="email" name="correo" maxlength="80" placeholder="tunombre@cbtis224.edu.mx" autocomplete="email" inputmode="email"></label>
+          <label class="check"><input type="checkbox" name="acepto"><span>Leí y acepto los <a href="#" data-show="aviso">avisos y términos</a> (uso educativo y privacidad).</span></label>
+          <p class="err" id="regErr" role="alert"></p>
+          <div class="cta"><button type="submit">Registrarme y jugar</button><button type="button" class="ghost" data-show="intro">Volver</button></div>
+        </form>
+      </section>
+
+      <section class="panel" id="aviso" hidden>
+        <div class="eyebrow">léelo antes de jugar</div>
+        <h2 class="title small" data-split>Avisos y términos</h2>
+        <div class="paper tape info aviso">
+          <h3>Uso educativo</h3>
+          <ul><li>Doppler Lock es un proyecto escolar del Equipo Estrellas (CBTis 224) para aprender el efecto Doppler. Es gratuito y no tiene fines comerciales.</li></ul>
+          <h3>Lo que simplificamos</h3>
+          <ul>
+            <li>En el aire, el sonido viaja a unos 343 m/s. Aquí va a 250 px/s, una escala de pantalla para que puedas ver las ondas.</li>
+            <li>Una nebulosa real es tan poco densa que no podrías oír un tono así. Aquí imaginamos un gas más denso.</li>
+            <li>Cada anillo dibujado representa 40 ondas: 400 Hz se ven como 10 anillos por segundo. Si dibujáramos todas, no se distinguirían.</li>
+            <li>El azul y el rojizo solo marcan agudo y grave. El sonido no tiene color; el corrimiento al azul y al rojo ocurre con la luz.</li>
+          </ul>
+          <h3>Aviso de privacidad</h3>
+          <ul>
+            <li>Pedimos tu nombre, tu grupo y tu correo institucional (@cbtis224.edu.mx), y guardamos tus tiempos.</li>
+            <li>Solo se usan para registrar tu participación en la clase y armar la tabla de posiciones. En la tabla aparecen tu nombre y tu grupo, nunca tu correo.</li>
+            <li>Se guardan en este dispositivo y, si hay internet, en una hoja de cálculo del profesor. Solo los ven el equipo y el profesor; no se venden ni se comparten.</li>
+            <li>Puedes pedirle al profesor que borre tus datos cuando quieras.</li>
+          </ul>
+          <h3>Cuida tus oídos y tus ojos</h3>
+          <ul><li>Usa audífonos a volumen bajo. El boom sónico hace un destello y sacude la pantalla.</li></ul>
+        </div>
+        <div class="cta"><button class="ghost" id="avisoBack">Volver</button></div>
+      </section>
+
+      <section class="panel" id="tabla" hidden>
+        <div class="eyebrow">los más rápidos de la nebulosa</div>
+        <h2 class="title small" data-split>Tabla de posiciones</h2>
+        <div class="paper tape info board" id="boardMain"></div>
+        <div class="cta"><button class="ghost" data-show="intro">Volver</button><button class="ghost small" id="csvBtn" hidden>Descargar datos (CSV)</button></div>
+      </section>
+
+      <section class="outro" id="outro" hidden>
+        <div class="eyebrow">misión cumplida</div>
+        <h1 class="title" data-split>¡Lo lograste!</h1>
+        <p class="lead" id="outroLead">Pasaste los tres niveles de la nebulosa.</p>
+        <div class="paper board" id="boardOutro"></div>
+        <div class="paper tape info">
+          <div class="card-h">La fórmula que usaste</div>
+          <p class="formula">f′ = f · (c + v<sub>oyente</sub>) / (c − v<sub>fuente</sub>)</p>
+          <div class="card-h">¿Y en el espacio vacío?</div>
+          <p>Ahí no hay sonido, pero la luz también tiene efecto Doppler: una estrella que se acerca se ve más <span class="b">azul</span> y una que se aleja, más <span class="r">roja</span>. Así sabemos que casi todas las galaxias lejanas se alejan de nosotros.</p>
+        </div>
+        <div class="cta"><button id="againBtn">Jugar otra vez</button></div>
+      </section>
+
+      <aside class="paper tape team">
+        <svg class="constel" viewBox="0 0 220 78" aria-hidden="true">
+          <path d="M14 21 L62 60 L107 27 L157 63 L205 15" fill="none" stroke="#2e2433" stroke-width="1.4" stroke-dasharray="4 4" stroke-linecap="round"/>
+          <g fill="#e6b85c" stroke="#2e2433" stroke-width="1.5" stroke-linejoin="round">
+            <path d="M14 13l2.3 5.4 5.6.4-4.3 3.6 1.4 5.5-5-3-4.9 3 1.4-5.5-4.3-3.6 5.6-.4z"/>
+            <path d="M62 52l2 4.8 5 .4-3.8 3.2 1.2 4.9-4.4-2.7-4.4 2.7 1.2-4.9-3.8-3.2 5-.4z"/>
+            <path d="M107 17l2.6 6.1 6.4.5-4.9 4.1 1.6 6.2-5.7-3.4-5.6 3.4 1.5-6.2-4.9-4.1 6.4-.5z"/>
+            <path d="M157 55l2.1 4.9 5.1.4-3.9 3.3 1.3 5-4.6-2.8-4.5 2.8 1.3-5-3.9-3.3 5.1-.4z"/>
+            <path d="M205 6l2.4 5.6 5.9.5-4.5 3.8 1.4 5.7-5.2-3.1-5.2 3.1 1.4-5.7-4.5-3.8 5.9-.5z"/>
+          </g>
+        </svg>
+        <div class="card-h">Equipo Estrellas</div>
+        <ul class="members">
+          <li><span><b>Ayon Sarabia</b> María Fernanda</span></li>
+          <li><span><b>Camacho Vargas</b> Yael Ricardo</span></li>
+          <li><span><b>Camarena Pillado</b> Juan Carlos</span></li>
+          <li><span><b>Figueroa Eseberre</b> María José</span></li>
+          <li><span><b>Noriega Melendres</b> Hiridyane</span></li>
+        </ul>
+        <p class="foot">5 integrantes, como las 5 estrellas de la W de Casiopea.</p>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<footer id="keys">
+  <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas: empujar</span>
+  <span><kbd>Shift</kbd> empuje fino</span>
+  <span><kbd>Espacio</kbd> frenar</span>
+  <span><kbd>H</kbd> ver la explicación</span>
+  <span><kbd>R</kbd> reiniciar nivel</span>
+  <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> saltar nivel (ese intento ya no cuenta para la tabla)</span>
+</footer>
+<footer id="touch">
+  <span class="rotate">Gira tu celular de lado para jugar más cómodo.</span>
+  <span>Lado izquierdo: arrastra el dedo para empujar · lado derecho: mantén el dedo para frenar</span>
+  <button class="ghost small" data-cmd="KeyH">Explicación</button>
+  <button class="ghost small" data-cmd="KeyR">Reiniciar nivel</button>
+  <button class="ghost small" id="fsBtn" hidden>Pantalla completa</button>
+</footer>
+
+<script src="js/juego.js"></script>
+</body>
+</html>

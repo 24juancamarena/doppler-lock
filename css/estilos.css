@@ -1,0 +1,152 @@
+/* Estilo: bitácora ilustrada a mano. Cielo de gouache con grano, notas de papel con cinta, todo con tinta.
+   Solo fuentes que ya trae Windows (Ink Free y Candara): no se descarga nada. */
+:root{
+  color-scheme:dark;
+  --night:#141a35; --plum:#4a3a63; --paper:#efe3c8; --paper2:#e2d0a8; --ink:#2e2433; --ink2:#6a5a63;
+  --gold:#e6b85c; --amber:#e9964a; --rust:#c4603f; --rustD:#a3432a; --sky:#7aaed0; --skyD:#2f6d96;
+  --sage:#8fb57a; --sageD:#4e7d3d; --cream:#f7eedb;
+  --hand:"Ink Free","Segoe Print","Bradley Hand","Chalkboard SE",cursive;
+  --body:Candara,"Segoe UI","Trebuchet MS","Gill Sans",sans-serif;
+  --wob:16px 6px 14px 8px / 8px 14px 6px 16px;
+  --wob2:7px 15px 6px 13px / 14px 6px 15px 7px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{
+  background:
+    var(--grain, none),
+    radial-gradient(55% 45% at 10% 5%,rgba(107,79,122,.45),transparent 70%),
+    radial-gradient(45% 40% at 95% 35%,rgba(44,58,102,.55),transparent 70%),
+    radial-gradient(60% 45% at 45% 110%,rgba(122,90,74,.30),transparent 70%),
+    var(--night);
+  background-attachment:fixed;
+  color:var(--cream);font-family:var(--body);font-size:15px;
+  padding:16px;display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+
+/* papel: bordes un poco chuecos, sombra dura, cinta */
+.paper{position:relative;color:var(--ink);background:var(--paper-grain, none),linear-gradient(170deg,#f4e9d1,#e8d9b7);
+  border:1.6px solid rgba(46,36,51,.65);border-radius:var(--wob);box-shadow:4px 5px 0 rgba(8,6,18,.42);padding:14px 16px}
+.tape::before{content:"";position:absolute;top:-10px;left:50%;width:74px;height:20px;transform:translateX(-50%) rotate(-3deg);
+  background:rgba(232,218,178,.82);clip-path:polygon(3% 0,97% 0,100% 25%,97% 50%,100% 75%,97% 100%,3% 100%,0 75%,3% 50%,0 25%)}
+
+/* encabezado */
+.top{width:100%;max-width:900px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--hand);font-size:24px;color:var(--cream)}
+.brand svg{width:34px;height:34px;transform:rotate(-8deg)}
+.brand b{color:var(--gold);font-weight:700}
+.badge{font-size:13px;padding:5px 12px;transform:rotate(2deg);box-shadow:3px 3px 0 rgba(8,6,18,.42)}
+
+/* marco del juego: como una ilustración enmarcada */
+#wrap{position:relative;width:100%;max-width:900px;border:3px solid var(--ink);border-radius:18px 8px 16px 10px / 10px 16px 8px 18px;
+  overflow:hidden;box-shadow:7px 8px 0 rgba(8,6,18,.55),inset 0 0 0 2px rgba(247,238,219,.08)}
+#c{display:block;width:100%;height:auto;aspect-ratio:3/2;background:#141a35}
+
+/* pantalla de inicio / final */
+#ov{position:absolute;inset:0;overflow:auto;display:flex;flex-direction:column;justify-content:safe center;align-items:center;padding:26px 32px;
+  background:var(--grain, none),rgba(20,26,53,.55)}
+.ov-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:30px;align-items:center;width:100%;max-width:830px}
+.intro,.outro{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--hand);font-size:18px;color:var(--gold)}
+.title{margin:0;font-family:var(--hand);font-weight:700;font-size:clamp(46px,7.4vw,74px);line-height:.95;color:var(--cream);text-shadow:3px 3px 0 var(--ink)}
+.title span{display:inline-block}
+.title .lock{color:var(--gold)}
+.scribble{display:block;width:min(330px,80%);height:14px;margin-top:-6px}
+.lead{margin:0;color:#e4d9c2;font-size:16px;line-height:1.45;max-width:46ch}
+.lead b{color:var(--gold)}
+.card-h{font-family:var(--hand);font-size:19px;color:var(--rustD);margin-bottom:4px}
+.paper p{margin:0;line-height:1.45;font-size:14.5px;color:var(--ink)}
+.paper p + .card-h{margin-top:12px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:14px;color:var(--ink2)}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50% 45% 55% 50%;margin-right:6px;vertical-align:-1px;border:1.5px solid var(--ink)}
+.dot.b{background:var(--sky)} .dot.r{background:var(--rust)}
+.b{color:var(--skyD);font-weight:700} .r{color:var(--rustD);font-weight:700}
+.info{transform:rotate(-.6deg)}
+.formula{font-size:17px;font-weight:700;letter-spacing:.02em;background:rgba(143,181,122,.25);border:1.5px dashed rgba(46,36,51,.45);border-radius:var(--wob2);padding:7px 10px}
+.formula sub{font-size:.7em}
+.levels{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.levels li{display:flex;flex-direction:column;gap:1px;padding:9px 12px 10px}
+.levels li:nth-child(1){transform:rotate(-1.4deg)} .levels li:nth-child(2){transform:rotate(.9deg)} .levels li:nth-child(3){transform:rotate(-.5deg)}
+.levels .n{font-family:var(--hand);font-size:15px;color:var(--rustD)}
+.levels b{font-size:16px}
+.levels small{color:var(--ink2);font-size:13px}
+.cta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:4px}
+.hint{color:#cfc3ad;font-size:14px;font-style:italic}
+button{font-family:var(--hand);font-size:24px;font-weight:700;color:var(--ink);background:var(--amber);border:2.5px solid var(--ink);
+  border-radius:var(--wob);padding:6px 28px 9px;box-shadow:4px 4px 0 var(--ink);cursor:pointer;transform:rotate(-1.2deg);transition:transform .1s,box-shadow .1s}
+button:hover{transform:rotate(-1.2deg) translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
+button:active{transform:rotate(-1.2deg) translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+button:focus-visible{outline:2.5px dashed var(--gold);outline-offset:5px}
+
+/* tarjeta del equipo */
+.team{transform:rotate(1.1deg);padding:18px 18px 14px}
+.team .constel{display:block;width:100%;height:auto;margin:2px 0 4px}
+.team .card-h{font-size:24px;color:var(--ink)}
+.members{list-style:none;margin:0;padding:0}
+.members li{display:flex;gap:9px;align-items:baseline;padding:7px 2px;border-bottom:1.5px dashed rgba(46,36,51,.28);font-size:15px}
+.members li:last-child{border-bottom:0}
+.members li::before{content:"★";color:var(--rust);font-size:14px}
+.members li:nth-child(odd)::before{transform:rotate(-12deg)}
+.team .foot{margin-top:8px;font-size:13.5px;color:var(--ink2);font-style:italic}
+
+/* controles */
+#keys{max-width:900px;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 20px;color:#d8ccb4;font-size:14px}
+kbd{display:inline-block;min-width:24px;text-align:center;font-family:var(--body);font-weight:700;font-size:12.5px;color:var(--ink);padding:2px 7px;margin-right:3px;
+  background:var(--paper);border:1.5px solid var(--ink);border-bottom-width:3px;border-radius:var(--wob2)}
+#keys span:nth-child(odd) kbd:nth-child(odd){transform:rotate(-3deg)}
+#keys span:nth-child(even) kbd:nth-child(even){transform:rotate(2.5deg)}
+
+/* registro, avisos y tabla */
+.panel{display:flex;flex-direction:column;gap:14px}
+.title.small{font-size:clamp(36px,5.4vw,54px)}
+.form{display:flex;flex-direction:column;gap:10px}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:14.5px;font-weight:700;color:var(--ink)}
+.form input[type=text],.form input[type=email]{font:16px var(--body);color:var(--ink);background:var(--cream);border:1.6px solid var(--ink);border-radius:var(--wob2);padding:7px 10px;width:100%}
+.form input:focus-visible{outline:2.5px dashed var(--amber);outline-offset:2px}
+.form .check{flex-direction:row;align-items:flex-start;gap:8px;font-weight:400}
+.form .check input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--sageD);flex:none}
+.paper a{color:var(--skyD);font-weight:700}
+.paper .err{color:var(--rustD);font-weight:700;min-height:1.2em}
+button.ghost{background:var(--paper);font-size:19px;padding:4px 18px 6px}
+button.small{font-size:16px;padding:3px 13px 5px;box-shadow:3px 3px 0 var(--ink)}
+.links{display:flex;gap:12px;flex-wrap:wrap}
+.who{margin:0;font-size:14.5px;color:#e4d9c2}
+.who b{color:var(--gold)}
+button.linkbtn,button.linkbtn:hover,button.linkbtn:active{font:inherit;color:var(--gold);background:none;border:0;box-shadow:none;padding:0;transform:none;text-decoration:underline}
+.aviso h3{font-family:var(--hand);font-size:19px;font-weight:400;color:var(--rustD);margin:12px 0 4px}
+.aviso h3:first-child{margin-top:0}
+.aviso ul{margin:0;padding-left:20px;line-height:1.45;font-size:14.5px}
+.aviso li{margin:3px 0}
+.board table{width:100%;border-collapse:collapse;font-size:14.5px}
+.board th{font-family:var(--hand);font-weight:400;font-size:16px;color:var(--rustD);text-align:left;padding:2px 6px;border-bottom:1.5px solid rgba(46,36,51,.5)}
+.board td{padding:5px 6px;border-bottom:1.5px dashed rgba(46,36,51,.22)}
+.board .t{text-align:right;white-space:nowrap}
+.board td.t{font-family:var(--hand);font-weight:700}
+.board tr.me td{background:rgba(143,181,122,.32)}
+.board .src{margin-top:8px;font-size:12.5px;color:var(--ink2);font-style:italic}
+
+/* controles táctiles */
+#c{touch-action:none}
+#touch{display:none;max-width:900px;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px 14px;color:#d8ccb4;font-size:14px;text-align:center}
+body.touch #touch{display:flex}
+body.touch #keys{display:none}
+.rotate{display:none;width:100%;color:var(--gold);font-family:var(--hand);font-size:17px}
+@media (orientation:portrait){ body.touch .rotate{display:block} }
+/* celular de lado: el juego ocupa todo el alto de la pantalla */
+@media (orientation:landscape) and (max-height:600px){
+  body.touch{padding:6px;gap:8px}
+  body.touch .top{display:none}
+  body.touch #wrap{max-width:min(900px,calc((100vh - 12px) * 1.5))}
+}
+#wrap:fullscreen{max-width:none;border:0;border-radius:0;display:flex;align-items:center;justify-content:center;background:var(--night)}
+#wrap:fullscreen #c{width:min(100vw,150vh)}
+
+@media (max-width:760px){
+  #wrap{display:flex;flex-direction:column}
+  #ov{position:relative;inset:auto;order:-1;padding:22px 16px}
+  .ov-grid{grid-template-columns:1fr}
+  .levels{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){ button{transition:none} }
