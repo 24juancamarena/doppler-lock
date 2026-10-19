@@ -8,7 +8,11 @@ const sf = font => FS === 1 ? font : font.replace(/([\d.]+)px/, (_, n) => (n * F
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const DPR = Math.min(2, window.devicePixelRatio || 1);
 cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-cv.addEventListener('click', () => { if (state === 'tut') nextTut(); else if (state === 'brief') play(); });
+const wrap = document.getElementById('wrap');
+wrap.addEventListener('click', e => {
+  if (e.target !== cv && e.target !== wrap) return;
+  if (state === 'tut') nextTut(); else if (state === 'brief') play();
+});
 const HAND = '"Ink Free", "Segoe Print", "Bradley Hand", "Chalkboard SE", cursive';
 const BODY = 'Candara, "Segoe UI", "Trebuchet MS", "Gill Sans", sans-serif';
 const COL = {
@@ -123,26 +127,30 @@ function command(code) {
   if (n >= 0) { if (run) run.ranked = false; startTut(n); }
 }
 
-const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0, ax: 0, ay: 0 }, JOY_R = 56;
+const joy = { id: null, fx: 0, fy: 0, ox: 0, oy: 0, dx: 0, dy: 0, ax: 0, ay: 0 }, JOY_R = 56;
 let brakeId = null, touchMode = false;
 function setTouch(on) { touchMode = on; FS = on ? 1.25 : 1; TOP = on ? 122 : 104; document.body.classList.toggle('touch', on); }
 setTouch(matchMedia('(pointer: coarse)').matches);
 const toCanvas = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
-cv.addEventListener('pointerdown', e => {
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+wrap.addEventListener('pointerdown', e => {
   if (e.pointerType === 'touch') setTouch(true);
-  if (state !== 'play') return;
+  if (state !== 'play' || (e.target !== cv && e.target !== wrap)) return;
   const p = toCanvas(e);
-  try { cv.setPointerCapture(e.pointerId); } catch {}
+  try { wrap.setPointerCapture(e.pointerId); } catch {}
   if (p.x > W * .72) { if (brakeId === null) brakeId = e.pointerId; }
-  else if (joy.id === null) Object.assign(joy, { id: e.pointerId, ox: p.x, oy: p.y, x: p.x, y: p.y, ax: 0, ay: 0 });
+  else if (joy.id === null) Object.assign(joy, {
+    id: e.pointerId, fx: p.x, fy: p.y, dx: 0, dy: 0, ax: 0, ay: 0,
+    ox: clamp(p.x, JOY_R + 12, W * .72 - JOY_R), oy: clamp(p.y, TOP + JOY_R, BOT - JOY_R),
+  });
 });
-cv.addEventListener('pointermove', e => {
+wrap.addEventListener('pointermove', e => {
   if (e.pointerId !== joy.id) return;
   const p = toCanvas(e);
-  let dx = p.x - joy.ox, dy = p.y - joy.oy;
+  let dx = p.x - joy.fx, dy = p.y - joy.fy;
   const d = Math.hypot(dx, dy);
-  if (d > JOY_R) { dx *= JOY_R / d; dy *= JOY_R / d; joy.ox = p.x - dx; joy.oy = p.y - dy; }
-  joy.x = p.x; joy.y = p.y;
+  if (d > JOY_R) { dx *= JOY_R / d; dy *= JOY_R / d; joy.fx = p.x - dx; joy.fy = p.y - dy; }
+  joy.dx = dx; joy.dy = dy;
   const k = Math.hypot(dx, dy) / JOY_R;
   joy.ax = k < .15 ? 0 : dx / JOY_R; joy.ay = k < .15 ? 0 : dy / JOY_R;
 });
@@ -150,7 +158,7 @@ const release = e => {
   if (e.pointerId === joy.id) { joy.id = null; joy.ax = joy.ay = 0; }
   if (e.pointerId === brakeId) brakeId = null;
 };
-cv.addEventListener('pointerup', release); cv.addEventListener('pointercancel', release);
+wrap.addEventListener('pointerup', release); wrap.addEventListener('pointercancel', release);
 const brakeHint = () => touchMode ? 'frena con el lado derecho' : 'Espacio frena';
 
 // jugador
@@ -1277,6 +1285,7 @@ function begin() {
   if (!audio) initAudio();
   audio.ac.resume();
   run = { t: [0, 0, 0], ranked: true };
+  if (touchMode && document.fullscreenEnabled && !document.fullscreenElement) toggleFS();
   startTut(0);
   document.activeElement.blur();
 }
@@ -1297,14 +1306,12 @@ function win() {
   ov.hidden = false;
 }
 
-document.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => command(b.dataset.cmd));
 function toggleFS() {
   if (document.fullscreenElement) return document.exitFullscreen();
-  $('wrap').requestFullscreen().then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {});
+  (touchMode ? document.documentElement : wrap).requestFullscreen().then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {});
 }
 if (document.fullscreenEnabled) {
-  $('fsBtn').hidden = $('pFs').hidden = false;
-  $('fsBtn').onclick = toggleFS;
+  $('pFs').hidden = false;
 }
 
 // pausa
@@ -1316,7 +1323,7 @@ function pauseGame() {
   const e = eqNow(prevState);
   tex(e.s || '\\text{—}', $('pausaEq'), true); tex(e.note, $('pausaNote'));
   const inTut = prevState === 'tut';
-  $('pausaLvl').textContent = inTut ? `explicación · nivel ${tut.level + 1}` : lvl.name;
+  $('pausaLvl').textContent = 'pausa · ' + (inTut ? `explicación · nivel ${tut.level + 1}` : lvl.name);
   $('pausaWhy').textContent = inTut ? tut.scenes[tut.i].cap : lvl.hud().why.replace(/^Por qué: /, '');
   $('pHelp').hidden = $('pRestart').hidden = inTut;
   $('pSkip').hidden = !inTut;
@@ -1388,7 +1395,7 @@ function drawTouch() {
   sketchCircle(joy.ox, joy.oy, JOY_R, 92, 1.5); ctx.fillStyle = 'rgba(239,227,200,.15)'; ctx.fill();
   ctx.strokeStyle = COL.cream; ctx.lineWidth = 2; ctx.stroke();
   ctx.globalAlpha = .9;
-  ctx.beginPath(); ctx.arc(joy.x, joy.y, 20, 0, 7); ctx.fillStyle = COL.amber; ctx.fill();
+  ctx.beginPath(); ctx.arc(joy.ox + joy.dx, joy.oy + joy.dy, 20, 0, 7); ctx.fillStyle = COL.amber; ctx.fill();
   ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.stroke();
   ctx.restore();
 }
